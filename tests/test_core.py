@@ -128,6 +128,47 @@ def test_corrupt_event_is_ignored(store):
     build_project(store.snapshot(), today=TODAY)
 
 
+
+# ─── Alcance: camiones, actividades y tareas SOP ──────────────────────────
+def test_scope_add_remove_activities_and_tasks(store):
+    write_event(store, "scope", {"op": "new_activity", "act": "cx_cleaning", "name": "Cleaning", "external": False,
+                                 "trucks": ["RD224", "RD225"], "start": "2026-11-20", "end": "2026-11-20"}, "admin")
+    write_event(store, "scope", {"op": "remove_activity", "truck": "RD224", "act": "trailing_lower"}, "admin")
+    write_event(store, "scope", {"op": "set_tasks", "truck": "RD224", "act": "nose_cone",
+                                 "tasks": ["NC-001", "NC-002"]}, "admin")
+    write_event(store, "task", {"truck": "RD224", "act": "nose_cone",
+                                "updates": [{"task_id": "NC-001", "status": "done"}]}, "sup")
+    p = build_project(store.snapshot(), today=TODAY)
+    acts = p.activities.set_index(["truck", "act_key"])
+    assert ("RD224", "cx_cleaning") in acts.index and ("RD225", "cx_cleaning") in acts.index
+    assert ("RD226", "cx_cleaning") not in acts.index
+    assert ("RD224", "trailing_lower") not in acts.index
+    assert acts.loc[("RD224", "cx_cleaning")].fc_end == date(2026, 11, 20)
+    assert acts.loc[("RD224", "nose_cone")].progress == pytest.approx(0.5)
+    assert config.activity("cx_cleaning").name == "Cleaning"
+    assert p.activities[p.activities.truck == "RD224"].order.max() == len(config.ACTIVITIES)
+    # Una actividad agregada después recibe fechas del plan
+    write_event(store, "scope", {"op": "add_activity", "truck": "RD224", "act": "trailing_lower"}, "admin")
+    write_event(store, "plan", {"truck": "RD224", "reason": "x", "changes": [
+        {"act": "trailing_lower", "fc_start": "2026-11-18", "fc_end": "2026-11-18"}]}, "admin")
+    p = build_project(store.snapshot(), today=TODAY)
+    assert p.activities.set_index(["truck", "act_key"]).loc[("RD224", "trailing_lower")].fc_end == date(2026, 11, 18)
+
+
+def test_scope_add_truck(store):
+    write_event(store, "scope", {"op": "add_truck", "truck": "RD240", "acts": [
+        {"act": "high_arch", "tasks": ["HA-001", "HA-002", "HA-003"]}, {"act": "trailing_lower", "tasks": None}]}, "a")
+    p = build_project(store.snapshot(), today=TODAY)
+    assert len(p.trucks) == 13
+    assert p.truck_row("RD240").status == "no_dates"
+    assert "RD240" in p.visible_trucks()
+    assert len(p.tasks[p.tasks.truck == "RD240"]) == 3
+    assert any(a["type"] == "missing_dates" and a["truck"] == "RD240" for a in p.alerts())
+    write_event(store, "scope", {"op": "remove_truck", "truck": "RD240"}, "a")
+    write_event(store, "scope", {"op": "remove_truck", "truck": "RD231"}, "a")
+    p = build_project(store.snapshot(), today=TODAY)
+    assert len(p.trucks) == 11 and "RD240" not in set(p.trucks.truck) and "RD231" not in set(p.activities.truck)
+
 # ─── Usuarios ─────────────────────────────────────────────────────────────
 def test_users_roundtrip_and_auth():
     users = {"ana": User("ana", "Ana", "supervisor", hash_password("password1"))}

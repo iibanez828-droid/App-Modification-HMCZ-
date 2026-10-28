@@ -1,21 +1,25 @@
 """Vista del administrador: resumen, alertas, Gantt, plan (fechas), detalle por
-camión, atrasos, reportes y configuración del proyecto. Los usuarios no se
+camión (avance, alta de camiones, actividades y tareas SOP), atrasos, reportes
+y configuración del proyecto. Los usuarios no se
 gestionan desde la app (ver scripts/users.py)."""
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 import pandas as pd
 import streamlit as st
 
 from core import config
+from core.catalog import tasks_for
 from core.events import write_event
 from core.executive_report import build_executive_pdf
 from core.reports import build_excel, status_csv
 from core.workdays import WorkCalendar
 from ui.common import (Ctx, act_name, fmt_date, fmt_pct, fmt_ts, kpi_cards, note, password_form, safe_write, section,
                        truck_badge, truck_label, esc)
+from ui import supervisor
 from ui.gantt import gantt_figure, truck_gantt_figure
 
 EDITABLE_STATUSES = ("in_progress", "overdue", "upcoming", "no_dates")
@@ -79,7 +83,7 @@ def _overview(ctx: Ctx) -> None:
 
     section(t("progress_matrix"))
     m = p.activities.pivot(index="truck", columns="act_key", values="progress")
-    m = m[[a.key for a in config.ACTIVITIES]] * 100
+    m = m[sorted(m.columns, key=config.activity_order)] * 100
     m.columns = [act_name(t, k) for k in m.columns]
     m.insert(0, t("status"), tr.set_index("truck").status.map(lambda s: t("st_" + s)))
     cfg = {c: st.column_config.ProgressColumn(c, min_value=0, max_value=100, format="%.0f%%", width=95)
@@ -329,16 +333,18 @@ def _plan(ctx: Ctx) -> None:
 
 # ─── 4. Detalle por camión ────────────────────────────────────────────────
 def _truck_detail(ctx: Ctx) -> None:
-    t, p, lang = ctx.t, ctx.project, ctx.lang
+    t, p = ctx.t, ctx.project
     tz = p.settings.get("timezone", "UTC")
-    truck = st.selectbox(t("truck"), p.trucks.truck.tolist(), key="det_truck", format_func=lambda x: truck_label(ctx, x),
-                         index=p.trucks.truck.tolist().index(p.visible_trucks()[0]) if p.visible_trucks() else 0)
+    _add_truck(ctx)
+    trucks = p.trucks.truck.tolist()
+    truck = st.selectbox(t("truck"), trucks, key="det_truck", format_func=lambda x: truck_label(ctx, x),
+                         index=trucks.index(p.visible_trucks()[0]) if p.visible_trucks() else 0)
     truck_badge(ctx, truck)
     acts = p.truck_activities(truck)
 
     section(t("activities"))
     st.dataframe(pd.DataFrame({
-        "act": acts.act_key.map(lambda k: act_name(t, k) + (" ⧉" if config.ACTIVITY_BY_KEY[k].external else "")),
+        "act": [act_name(t, k) + (" ⧉" if ext else "") for k, ext in zip(acts.act_key, acts.external)],
         "status": acts.status.map(lambda s: t("st_" + s)),
         "progress": acts.progress * 100,
         "base": [f"{fmt_date(a)} → {fmt_date(b)}" for a, b in zip(acts.base_start, acts.base_end)],
@@ -354,21 +360,17 @@ def _truck_detail(ctx: Ctx) -> None:
     })
     st.caption(t("external_mark"))
 
-    section(t("sop_tasks"))
-    for a in acts[acts.has_sop].itertuples():
-        tk = p.tasks[(p.tasks.truck == truck) & (p.tasks.act_key == a.act_key)]
-        done = (tk.status == "done").sum()
-        na = (tk.status == "na").sum()
-        with st.expander(f"{act_name(t, a.act_key)} · {done}/{len(tk) - na} · {fmt_pct(a.progress)}"):
-            st.dataframe(pd.DataFrame({
-                "id": tk.task_id, "task": tk.desc_jp.where((lang == "ja") & (tk.desc_jp != ""), tk.desc_en),
-                "qc": tk.qc_gate, "status": tk.status.map(lambda s: t("ts_" + s)),
-                "mh": tk.actual_mh, "sup": tk.supervisor, "tech": tk.technicians, "date": tk.date,
-                "qcr": tk.qc_result.map(lambda s: t("qc_" + s)), "rem": tk.remarks,
-            }), hide_index=True, width="stretch", column_config={
-                "id": t("col_task_id"), "task": t("col_task"), "qc": t("col_qc"), "status": t("col_status"),
-                "mh": t("col_mh"), "sup": t("col_supervisor"), "tech": t("col_technicians"), "date": t("col_date"),
-                "qcr": t("col_qc_result"), "rem": t("col_remarks")})
+    # Registro de avance: el administrador edita igual que el supervisor
+    section(t("edit_progress"))
+    act_key = st.selectbox(
+        t("activity"), acts.act_key.tolist(), key=f"adm_act_{truck}",
+        format_func=lambda k: f"{act_name(t, k)} · {fmt_pct(float(acts.set_index('act_key').at[k, 'progress']))}",
+    )
+    supervisor.activity_editor(ctx, truck, act_key, acts)
+    supervisor.history(ctx, truck, act_key)
+
+    _manage_activities(ctx, truck, acts)
+    _remove_truck(ctx, truck)
 
     c1, c2 = st.columns(2)
     with c1:
@@ -388,6 +390,175 @@ def _truck_detail(ctx: Ctx) -> None:
             sup = sup.groupby(sup.supervisor.replace("", "—"))["mh"].sum().reset_index()
             st.dataframe(sup, hide_index=True, width="stretch",
                          column_config={"supervisor": t("col_supervisor"), "mh": st.column_config.NumberColumn(t("col_mh"), format="%.1f")})
+
+
+def _nonce(key: str) -> int:
+    return st.session_state.setdefault(f"scope_nonce_{key}", 0)
+
+
+def _save_scope(ctx: Ctx, payload: dict, subject: str, nonce_key: str) -> None:
+    if safe_write(ctx, lambda: write_event(ctx.store, "scope", payload, ctx.user.username, subject), ctx.t("scope_saved")):
+        st.session_state[f"scope_nonce_{nonce_key}"] = _nonce(nonce_key) + 1
+        st.rerun()
+
+
+def _task_picker(ctx: Ctx, act_key: str, key: str, selected: list[str] | None = None) -> list[str]:
+    """Tabla de tareas SOP con una casilla para incluir/excluir cada una."""
+    t, lang = ctx.t, ctx.lang
+    cat = tasks_for(act_key)
+    chosen = set(cat.task_id) if selected is None else set(selected)
+    df = pd.DataFrame({
+        "include": cat.task_id.isin(chosen), "task_id": cat.task_id, "stage": cat.stage,
+        "task": cat.desc_jp.where((lang == "ja") & (cat.desc_jp != ""), cat.desc_en),
+    })
+    out = st.data_editor(df, key=key, hide_index=True, width="stretch", height=min(38 + 35 * len(df), 420),
+                         disabled=["task_id", "stage", "task"], column_config={
+                             "include": st.column_config.CheckboxColumn(t("include"), width=80),
+                             "task_id": st.column_config.TextColumn(t("col_task_id"), width=80),
+                             "stage": st.column_config.TextColumn(t("col_stage"), width=110),
+                             "task": st.column_config.TextColumn(t("col_task")),
+                         })
+    picked = out[out.include].task_id.tolist()
+    st.caption(t("tasks_selected", n=len(picked), total=len(df)))
+    return picked
+
+
+def _new_activity_key(name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:24] or "act"
+    key, n = f"cx_{slug}", 2
+    while key in config.ACTIVITY_BY_KEY or key in config.CUSTOM_ACTIVITIES:
+        key, n = f"cx_{slug}_{n}", n + 1
+    return key
+
+
+def _iso(d: date | None) -> str:
+    return d.isoformat() if d else ""
+
+
+def _manage_activities(ctx: Ctx, truck: str, acts: pd.DataFrame) -> None:
+    t, p = ctx.t, ctx.project
+    nonce = _nonce(truck)
+    section(t("manage_activities"))
+    tab_add, tab_tasks, tab_remove = st.tabs([":material/add: " + t("add_activity"),
+                                              ":material/checklist: " + t("edit_sop_tasks"),
+                                              ":material/delete: " + t("remove_activity")])
+
+    # ── Agregar: actividad general nueva o una actividad que este camión no tiene
+    with tab_add:
+        missing = [a.key for a in config.all_activities() if a.key not in set(acts.act_key)]
+        mode = st.segmented_control(t("add_mode"), ["new", "existing"], default="new", key=f"add_mode_{truck}_{nonce}",
+                                    format_func=lambda m: t("add_mode_" + m)) or "new"
+        act, tasks = None, None
+        if mode == "new":
+            note(t("new_activity_help"))
+            c1, c2 = st.columns([3, 1], vertical_alignment="bottom")
+            name = c1.text_input(t("activity_name"), key=f"new_name_{truck}_{nonce}", placeholder=t("activity_name_ph"))
+            external = c2.checkbox(t("external"), key=f"new_ext_{truck}_{nonce}")
+            all_trucks = st.toggle(t("add_to_all_trucks"), key=f"new_all_{truck}_{nonce}")
+            targets = p.trucks.truck.tolist() if all_trucks else st.multiselect(
+                t("trucks"), p.trucks.truck.tolist(), default=[truck], key=f"new_trucks_{truck}_{nonce}")
+        elif not missing:
+            note(t("no_missing_activities"))
+        else:
+            act = st.selectbox(t("activity"), missing, key=f"add_act_{truck}_{nonce}", format_func=lambda k: act_name(t, k))
+            if config.activity(act).sops:
+                tasks = _task_picker(ctx, act, f"add_tasks_{truck}_{act}_{nonce}")
+        if mode == "new" or act:
+            c1, c2, _ = st.columns([1, 1, 2])
+            start = c1.date_input(t("fc_start"), value=None, key=f"add_start_{truck}_{nonce}", format="DD/MM/YYYY")
+            end = c2.date_input(t("fc_end"), value=None, key=f"add_end_{truck}_{nonce}", format="DD/MM/YYYY")
+            st.caption(t("add_dates_help"))
+            if st.button(t("add_activity"), type="primary", icon=":material/add:", key=f"add_btn_{truck}_{nonce}"):
+                if start and end and end < start:
+                    st.error(t("err_end_before_start", act=t("activity")))
+                elif mode == "new":
+                    names = {act_name(t, a.key).strip().lower() for a in config.all_activities()}
+                    if not name.strip():
+                        st.error(t("err_activity_name"))
+                    elif name.strip().lower() in names:
+                        st.error(t("err_activity_exists"))
+                    elif not targets:
+                        st.error(t("select_trucks"))
+                    else:
+                        _save_scope(ctx, {"op": "new_activity", "act": _new_activity_key(name), "name": name.strip(),
+                                          "external": external, "trucks": targets, "start": _iso(start),
+                                          "end": _iso(end)}, truck, truck)
+                elif tasks is not None and not tasks:
+                    st.error(t("err_no_tasks"))
+                else:
+                    _save_scope(ctx, {"op": "add_activity", "truck": truck, "act": act, "tasks": tasks,
+                                      "start": _iso(start), "end": _iso(end)}, truck, truck)
+
+    # ── Subtareas SOP incluidas en cada actividad con SOP
+    with tab_tasks:
+        sop_acts = acts[acts.has_sop].act_key.tolist()
+        if not sop_acts:
+            note(t("no_sop_activities"))
+        else:
+            note(t("edit_sop_tasks_help"))
+            act = st.selectbox(t("activity"), sop_acts, key=f"sop_act_{truck}_{nonce}", format_func=lambda k: act_name(t, k))
+            current = p.tasks[(p.tasks.truck == truck) & (p.tasks.act_key == act)].task_id.tolist()
+            picked = _task_picker(ctx, act, f"sop_tasks_{truck}_{act}_{nonce}", current)
+            if st.button(t("save_sop_tasks"), type="primary", icon=":material/save:", key=f"sop_btn_{truck}_{nonce}",
+                         disabled=set(picked) == set(current)):
+                if not picked:
+                    st.error(t("err_no_tasks"))
+                else:
+                    _save_scope(ctx, {"op": "set_tasks", "truck": truck, "act": act, "tasks": picked}, truck, truck)
+
+    # ── Quitar una actividad del camión
+    with tab_remove:
+        if len(acts) <= 1:
+            note(t("err_last_activity"))
+        else:
+            note(t("remove_activity_help"))
+            act = st.selectbox(t("activity"), acts.act_key.tolist(), key=f"rm_act_{truck}_{nonce}",
+                               format_func=lambda k: act_name(t, k))
+            sure = st.checkbox(t("remove_confirm", act=act_name(t, act), truck=truck), key=f"rm_ok_{truck}_{nonce}")
+            if st.button(t("remove_activity"), icon=":material/delete:", key=f"rm_btn_{truck}_{nonce}", disabled=not sure):
+                _save_scope(ctx, {"op": "remove_activity", "truck": truck, "act": act}, truck, truck)
+
+
+def _remove_truck(ctx: Ctx, truck: str) -> None:
+    t, p = ctx.t, ctx.project
+    nonce = _nonce(truck)
+    with st.expander(t("remove_truck"), icon=":material/delete_forever:"):
+        if len(p.trucks) <= 1:
+            note(t("err_last_truck"))
+            return
+        note(t("remove_truck_help"))
+        typed = st.text_input(t("remove_truck_confirm", truck=truck), key=f"rt_id_{truck}_{nonce}")
+        if st.button(t("remove_truck"), icon=":material/delete_forever:", key=f"rt_btn_{truck}_{nonce}",
+                     disabled=typed.strip().upper() != truck.upper()):
+            _save_scope(ctx, {"op": "remove_truck", "truck": truck}, truck, truck)
+
+
+def _add_truck(ctx: Ctx) -> None:
+    t, p = ctx.t, ctx.project
+    nonce = _nonce("_new_truck_")
+    with st.expander(t("add_truck"), icon=":material/add_circle:"):
+        note(t("add_truck_help"))
+        truck = st.text_input(t("truck_id"), key=f"nt_id_{nonce}", placeholder="RD232").strip().upper()
+        keys = st.multiselect(t("activities"), [a.key for a in config.all_activities()],
+                              default=[a.key for a in config.ACTIVITIES], key=f"nt_acts_{nonce}",
+                              format_func=lambda k: act_name(t, k))
+        tasks: dict[str, list[str]] = {}
+        for k in keys:
+            if config.activity(k).sops:
+                st.markdown(f"**{act_name(t, k)}** · {t('sop_tasks_included')}")
+                tasks[k] = _task_picker(ctx, k, f"nt_tasks_{k}_{nonce}")
+        if st.button(t("add_truck"), type="primary", icon=":material/local_shipping:", key=f"nt_btn_{nonce}"):
+            if not re.fullmatch(r"[A-Z0-9-]{2,12}", truck):
+                st.error(t("err_truck_id"))
+            elif truck in set(p.trucks.truck):
+                st.error(t("err_truck_exists", truck=truck))
+            elif not keys:
+                st.error(t("err_no_activities"))
+            elif any(not v for v in tasks.values()):
+                st.error(t("err_no_tasks"))
+            else:
+                acts = [{"act": k, "tasks": tasks.get(k)} for k in keys]
+                _save_scope(ctx, {"op": "add_truck", "truck": truck, "acts": acts}, truck, "_new_truck_")
 
 
 # ─── 5. Atrasos ───────────────────────────────────────────────────────────

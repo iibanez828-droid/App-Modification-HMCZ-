@@ -46,7 +46,7 @@ def fmt_ts(ts: str, tz: str) -> str:
 
 
 def act_name(t: T, key: str) -> str:
-    return t(f"act_{key}")
+    return config.activity(key).name or t(f"act_{key}")
 
 
 def esc(text: object) -> str:

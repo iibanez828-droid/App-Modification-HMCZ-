@@ -63,6 +63,9 @@ except StorageError as exc:
         st.rerun()
     st.stop()
 
+if project is not None:  # actividades creadas en la app (el caché puede omitir build_project)
+    config.set_custom_activities(project.custom_acts)
+
 users = load_users(snapshot)
 master = master_account(_secrets())
 

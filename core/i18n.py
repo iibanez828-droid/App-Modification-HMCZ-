@@ -305,6 +305,61 @@ TEXTS: dict[str, tuple[str, str]] = {
     "publish_help": ("Saves the report in the data branch, folder reports/.", "データブランチの reports/ フォルダに保存します。"),
     "published": ("Report published in reports/.", "reports/ にレポートを公開しました。"),
 
+    # ── Camiones: avance y alcance (administrador) ──
+    "edit_progress": ("Update activity progress", "作業項目の進捗を更新"),
+    "manage_activities": ("Manage activities", "作業項目の管理"),
+    "add_activity": ("Add activity", "作業項目を追加"),
+    "edit_sop_tasks": ("SOP sub-tasks", "SOP サブタスク"),
+    "remove_activity": ("Remove activity", "作業項目を削除"),
+    "add_mode": ("Type", "種類"),
+    "add_mode_new": ("New general activity", "新しい一般作業"),
+    "add_mode_existing": ("Activity from the plan", "計画の作業項目"),
+    "new_activity_help": ("Creates a single general activity without SOP sub-tasks (e.g. cleaning). It is added to the "
+                          "selected trucks and appears in the whole app: plan, Gantt, progress and reports.",
+                          "SOP サブタスクのない単一の一般作業（例：清掃）を作成します。選択した車両に追加され、"
+                          "計画、ガント、進捗、レポートなどアプリ全体に表示されます。"),
+    "activity_name": ("Activity name", "作業項目名"),
+    "activity_name_ph": ("e.g. Final cleaning", "例：最終清掃"),
+    "add_to_all_trucks": ("Add to all trucks", "全車両に追加"),
+    "no_missing_activities": ("This truck already has every activity of the plan.", "この車両には計画のすべての作業項目があります。"),
+    "add_dates_help": ("Optional. Without dates the activity shows as «no dates»; you can set them later in the Plan tab.",
+                       "任意。日付がない場合は「日付なし」と表示され、後で計画タブで設定できます。"),
+    "include": ("Include", "含める"),
+    "tasks_selected": ("{n} of {total} tasks selected.", "{total} 件中 {n} 件のタスクを選択。"),
+    "sop_tasks_included": ("SOP tasks to include", "含める SOP タスク"),
+    "no_sop_activities": ("This truck has no activities with SOP.", "この車両には SOP 付きの作業項目がありません。"),
+    "edit_sop_tasks_help": ("Untick a sub-task to remove it from this truck (its records are kept). Tick it again to "
+                            "restore it. Progress is recalculated with the included tasks only.",
+                            "チェックを外すとこの車両からサブタスクを削除します（記録は保持）。再度チェックすると戻ります。"
+                            "進捗は含まれるタスクのみで再計算されます。"),
+    "save_sop_tasks": ("Save SOP tasks", "SOP タスクを保存"),
+    "remove_activity_help": ("The activity is removed from this truck's plan. The records already saved are kept in the "
+                             "history; if you add it again, its progress comes back.",
+                             "この車両の計画から作業項目を削除します。保存済みの記録は履歴に残り、再追加すると進捗も戻ります。"),
+    "remove_confirm": ("I confirm removing «{act}» from {truck}", "{truck} から「{act}」を削除することを確認します"),
+    "scope_saved": ("Plan scope updated.", "計画範囲を更新しました。"),
+    "add_truck": ("Add truck", "車両を追加"),
+    "add_truck_help": ("Adds a new truck to the whole app. Choose its activities and, for activities with SOP, which "
+                       "sub-tasks apply. Set its dates afterwards in the Plan tab.",
+                       "アプリ全体に新しい車両を追加します。作業項目と、SOP 付き作業項目の対象サブタスクを選択してください。"
+                       "日付は後で計画タブで設定します。"),
+    "truck_id": ("Truck number", "車両番号"),
+    "err_truck_id": ("Use 2–12 letters, numbers or hyphens for the truck number.", "車両番号は英数字またはハイフン 2～12 文字で入力してください。"),
+    "err_truck_exists": ("Truck {truck} already exists.", "車両 {truck} は既に存在します。"),
+    "err_no_activities": ("Select at least one activity.", "作業項目を1つ以上選択してください。"),
+    "err_no_tasks": ("Select at least one SOP task (or remove the activity).", "SOP タスクを1つ以上選択してください（または作業項目を削除）。"),
+    "err_activity_name": ("Enter the activity name.", "作業項目名を入力してください。"),
+    "err_activity_exists": ("An activity with that name already exists.", "同じ名前の作業項目が既に存在します。"),
+    "remove_truck": ("Remove truck", "車両を削除"),
+    "remove_truck_help": ("Removes the truck from the whole app (for example, if it was added by mistake). The records "
+                          "already saved are kept in the history; adding a truck with the same number does not restore "
+                          "its activities.",
+                          "アプリ全体から車両を削除します（誤って追加した場合など）。保存済みの記録は履歴に残ります。"
+                          "同じ番号で車両を追加しても作業項目は復元されません。"),
+    "remove_truck_confirm": ("Type {truck} to confirm", "確認のため {truck} と入力してください"),
+    "err_last_truck": ("The plan must keep at least one truck.", "計画には少なくとも1台の車両が必要です。"),
+    "err_last_activity": ("A truck must keep at least one activity.", "車両には少なくとも1つの作業項目が必要です。"),
+
     # ── Configuración ──
     "settings": ("Settings", "設定"),
     "set_lookahead": ("Show trucks … days before start", "開始何日前から車両を表示"),

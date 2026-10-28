@@ -3,7 +3,7 @@
 App web (Streamlit) para controlar la ejecución de las modificaciones de **12 camiones EH5000 (RD 220 a RD 231)**. La interfaz está en **inglés y japonés**.
 
 - **Supervisores:** registran el avance por tarea de los SOP, las horas-hombre, el supervisor, los técnicos, comentarios y notas de atraso.
-- **Administradores:** ven el resumen y las alertas, el Gantt interactivo (por camión o por actividad), ajustan las fechas del pronóstico, revisan los atrasos y generan el reporte ejecutivo en PDF y la exportación de datos.
+- **Administradores:** ven el resumen y las alertas, el Gantt interactivo (por camión o por actividad), ajustan las fechas del pronóstico, registran el avance de cualquier camión, agregan o eliminan camiones, agregan o quitan actividades y subtareas SOP (pestaña **Trucks**), revisan los atrasos y generan el reporte ejecutivo en PDF y la exportación de datos.
 
 ---
 
@@ -68,7 +68,7 @@ plan/baseline.csv             ← Plan original (se copia una vez desde seed/)
 plan/settings.json            ← Configuración inicial
 users/users.json              ← Usuarios con contraseña cifrada
 log/task/AAAA-MM/…json        ← Avance de tareas (un archivo por guardado)
-log/delay/…  log/plan/…  log/ack/…  log/settings/…
+log/delay/…  log/plan/…  log/ack/…  log/settings/…  log/scope/… ← camiones, actividades y tareas SOP agregadas o quitadas
 reports/                      ← Reportes publicados desde la app
 ```
 
@@ -146,3 +146,4 @@ python scripts/users.py master-hash                   # generar la sección [mas
 | Reglas de avance, estados o alertas                                   | `core/project.py`                                                                             |
 | SOP actualizados                                                      | Reemplazar el Excel en `seed/` y ejecutar `python seed/build_seed.py`                         |
 | Fechas de un camión en curso                                          | Desde la app: pestaña **Plan** (el plan original ya cargado no cambia al reemplazar el Gantt) |
+| Camiones, actividades generales o subtareas SOP de un camión          | Desde la app: pestaña **Trucks** → *Add truck* / *Manage activities* / *Remove truck*                       |

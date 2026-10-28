@@ -26,7 +26,7 @@ def load_notes() -> pd.DataFrame:
 
 def tasks_for(act_key: str) -> pd.DataFrame:
     """Tareas de una actividad, en el orden de sus SOP."""
-    sops = config.ACTIVITY_BY_KEY[act_key].sops
+    sops = config.activity(act_key).sops
     cat = load_catalog()
     parts = [cat[cat.sop == s].sort_values("seq") for s in sops]
     return pd.concat(parts, ignore_index=True) if parts else cat.iloc[0:0]
