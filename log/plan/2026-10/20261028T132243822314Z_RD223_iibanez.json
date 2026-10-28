@@ -1,0 +1,46 @@
+{
+ "kind": "plan",
+ "ts": "2026-10-28T13:22:43.822314+00:00",
+ "user": "iibanez",
+ "truck": "RD223",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "assigned_to": "Ivan"
+  },
+  {
+   "act": "trunnion_cap",
+   "assigned_to": "Yuya"
+  },
+  {
+   "act": "trunnion_mod",
+   "assigned_to": "Yuya"
+  },
+  {
+   "act": "trailing_assy",
+   "assigned_to": "Ivan"
+  },
+  {
+   "act": "high_arch",
+   "fc_end": "2026-10-31",
+   "assigned_to": "Yuya"
+  },
+  {
+   "act": "nose_cone",
+   "assigned_to": "Yuya"
+  },
+  {
+   "act": "rhs_seat",
+   "assigned_to": "Yuya"
+  },
+  {
+   "act": "lhs_seat",
+   "assigned_to": "Yuya"
+  }
+ ],
+ "reason": "Test delay",
+ "weekend": {
+  "sat": true,
+  "sun": true
+ }
+}
