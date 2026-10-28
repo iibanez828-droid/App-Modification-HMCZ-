@@ -285,13 +285,18 @@ def _timeline(pdf: _Report, p: Project) -> None:
     pdf.set_y(y + 7)
 
 
+def _plan_activities(p: Project) -> list[config.Activity]:
+    present = set(p.activities.act_key)
+    return [a for a in config.all_activities() if a.key in present]
+
+
 def _activity_summary(pdf: _Report, p: Project) -> None:
     cols = [("Activity", 52, "L"), ("Completed", 18, "C"), ("In progress", 18, "C"), ("Not started", 18, "C"),
             ("Overdue", 16, "C"), ("Avg progress", 38, "L"), ("Behind plan", 26, "C")]
     pdf.table_head(cols)
     a = p.activities
     n_trucks = len(p.trucks)
-    for n, act in enumerate(config.ACTIVITIES):
+    for n, act in enumerate(_plan_activities(p)):
         g = a[a.act_key == act.key]
         st_ = g.status.value_counts()
         y = pdf.get_y()
@@ -386,7 +391,7 @@ def build_executive_pdf(p: Project) -> bytes:
     pdf.section("Fleet timeline (original plan vs. forecast)", need=6.2 * len(tr) + 25)
     _timeline(pdf, p)
 
-    pdf.section("Activity summary - all trucks", need=7 * len(config.ACTIVITIES) + 20)
+    pdf.section("Activity summary - all trucks", need=7 * len(_plan_activities(p)) + 20)
     _activity_summary(pdf, p)
 
     pdf.section("Delays reported by supervisors")

@@ -17,11 +17,20 @@ _CSS = """
 html,body,[class*="css"]{font-family:'Barlow',sans-serif;}
 .block-container{padding-top:1rem!important;padding-left:2rem!important;padding-right:2rem!important;max-width:1400px;}
 #MainMenu,footer{visibility:hidden;}
-/* Barra superior de Streamlit (GitHub, Share, menú, Deploy): oculta. Se deja
-   el encabezado transparente para no perder el botón que abre la barra lateral. */
-[data-testid="stToolbar"],[data-testid="stToolbarActions"],[data-testid="stMainMenu"],[data-testid="stAppDeployButton"],
+/* Barra superior de Streamlit (GitHub, Share, menú, Deploy): oculta. stToolbar
+   NO se oculta: contiene el botón que vuelve a abrir la barra lateral. */
+[data-testid="stToolbarActions"],[data-testid="stMainMenu"],[data-testid="stAppDeployButton"],
 .stAppDeployButton,[data-testid="stDecoration"],[data-testid="stStatusWidget"]{display:none!important;}
-header[data-testid="stHeader"]{background:transparent!important;box-shadow:none!important;}
+header[data-testid="stHeader"],[data-testid="stToolbar"]{background:transparent!important;box-shadow:none!important;}
+
+/* Botones para esconder / mostrar la barra lateral: siempre visibles */
+[data-testid="stExpandSidebarButton"]{display:flex!important;visibility:visible!important;opacity:1!important;
+  background:#1A1A1A!important;border:2px solid #FF6B00!important;border-radius:4px!important;}
+[data-testid="stExpandSidebarButton"] span{color:#FF6B00!important;}
+[data-testid="stSidebarCollapseButton"],[data-testid="stSidebarCollapseButton"] button{display:flex!important;
+  visibility:visible!important;opacity:1!important;}
+[data-testid="stSidebarCollapseButton"] button{border-color:#FF6B00!important;}
+[data-testid="stSidebarCollapseButton"] span{color:#FF6B00!important;}
 
 /* Barra lateral oscura */
 [data-testid="stSidebar"]{background:#1A1A1A!important;border-right:3px solid #FF6B00;}

@@ -26,6 +26,7 @@ class Activity:
     gantt_name: str     # nombre tal como aparece en el Gantt
     sops: tuple[str, ...]  # prefijos de Task ID de los SOP asociados (vacío = sin SOP)
     external: bool = False  # lo ejecuta un contratista externo
+    name: str = ""          # nombre visible de las actividades creadas en la app (las fijas usan i18n)
 
 
 ACTIVITIES: tuple[Activity, ...] = (
@@ -41,6 +42,31 @@ ACTIVITIES: tuple[Activity, ...] = (
 ACTIVITY_BY_KEY = {a.key: a for a in ACTIVITIES}
 ACTIVITY_ORDER = {a.key: n for n, a in enumerate(ACTIVITIES)}
 EXTERNAL_KEYS = tuple(a.key for a in ACTIVITIES if a.external)
+
+# Actividades generales (sin SOP) que el administrador crea desde la app. Se
+# leen de los eventos al calcular el proyecto (ver core/project.py).
+CUSTOM_ACTIVITIES: dict[str, Activity] = {}
+
+
+def set_custom_activities(acts: dict[str, Activity]) -> None:
+    CUSTOM_ACTIVITIES.clear()
+    CUSTOM_ACTIVITIES.update(acts)
+
+
+def activity(key: str) -> Activity:
+    """Actividad fija o creada en la app; una clave desconocida no rompe la vista."""
+    return ACTIVITY_BY_KEY.get(key) or CUSTOM_ACTIVITIES.get(key) or Activity(key, key, (), name=key)
+
+
+def all_activities() -> list[Activity]:
+    return list(ACTIVITIES) + list(CUSTOM_ACTIVITIES.values())
+
+
+def activity_order(key: str) -> int:
+    if key in ACTIVITY_ORDER:
+        return ACTIVITY_ORDER[key]
+    custom = list(CUSTOM_ACTIVITIES)
+    return len(ACTIVITIES) + (custom.index(key) if key in custom else len(custom))
 
 # SOP: prefijo de Task ID → archivo de origen en seed/
 SOP_FILES = {

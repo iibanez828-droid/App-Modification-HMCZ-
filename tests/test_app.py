@@ -49,7 +49,7 @@ def test_login_always_shown_and_admin_view(at):
     assert len(at.text_input) == 2  # solo usuario y contraseña: no hay pantalla de alta
     _setup_admin(at)
     assert not at.exception
-    assert len(at.tabs) == 7
+    assert len(at.tabs) == 10  # 7 pestañas + 3 de gestión de actividades (camión)
     assert any("Coordinate trunnion work" in m.value for m in at.markdown)
     assert not any(s.label == "View" for s in at.get("segmented_control"))  # el admin no ve la vista de supervisor
 
@@ -76,7 +76,7 @@ def test_supervisor_sees_only_supervisor_view(at):
 def test_master_switches_views(at):
     _login(at, "iibanez", MASTER_PW)
     assert at.session_state["user"].is_master
-    assert len(at.tabs) == 7
+    assert len(at.tabs) == 10  # 7 pestañas + 3 de gestión de actividades (camión)
     at.session_state["view_pick"] = "supervisor"
     at.run()
     assert not at.exception
@@ -164,3 +164,35 @@ def test_admin_truck_gantt_and_no_user_management(at):
     next(b for b in at.button if b.label == "Generate reports").click().run()
     assert not at.exception
     assert any(b.label == "Download executive report (PDF)" for b in at.get("download_button"))
+
+
+def test_admin_edits_progress_and_scope(at, tmp_path):
+    _setup_admin(at)
+    truck = at.selectbox(key="det_truck").value
+    # Avance manual de una actividad sin SOP desde la pestaña de camiones
+    acts = at.selectbox(key=f"adm_act_{truck}").options
+    at.selectbox(key=f"adm_act_{truck}").set_value(next(o for o in at.selectbox(key=f"adm_act_{truck}").options
+                                                         if "Trailing arm lowering" in o)).run()
+    assert not at.exception
+    next(b for b in at.button if b.label == "Save progress").click().run()
+    assert not at.exception
+    assert list((tmp_path / "data" / "log" / "task").rglob("*.json"))
+    assert acts
+    # Nueva actividad general en todos los camiones
+    at.text_input(key=f"new_name_{truck}_0").input("Final cleaning")
+    at.toggle(key=f"new_all_{truck}_0").set_value(True)
+    next(b for b in at.button if b.label == "Add activity").click().run()
+    assert not at.exception
+    assert list((tmp_path / "data" / "log" / "scope").rglob("*.json"))
+    assert any("Final cleaning" in o for o in at.selectbox(key=f"adm_act_{truck}").options)
+    # Camión nuevo
+    at.text_input(key="nt_id_0").input("rd240")
+    next(b for b in at.button if b.label == "Add truck").click().run()
+    assert not at.exception
+    assert any(o.startswith("RD240") for o in at.selectbox(key="det_truck").options)
+    # Eliminar el camión recién agregado
+    at.selectbox(key="det_truck").set_value("RD240").run()
+    at.text_input(key="rt_id_RD240_0").input("RD240").run()
+    next(b for b in at.button if b.label == "Remove truck").click().run()
+    assert not at.exception
+    assert not any(o.startswith("RD240") for o in at.selectbox(key="det_truck").options)

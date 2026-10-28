@@ -68,17 +68,20 @@ def render(ctx: Ctx) -> None:
         format_func=lambda k: f"{act_name(t, k)} · {fmt_pct(float(acts.set_index('act_key').at[k, 'progress']))}",
     )
     truck_badge(ctx, truck)
+    activity_editor(ctx, truck, act_key, acts)
+    st.write("")
+    _delay_form(ctx, truck, acts)
+    history(ctx, truck, act_key)
+
+
+def activity_editor(ctx: Ctx, truck: str, act_key: str, acts: pd.DataFrame) -> None:
+    """Encabezado y registro de avance de una actividad (también lo usa el administrador)."""
     act = acts.set_index("act_key").loc[act_key]
     _activity_header(ctx, act_key, act)
-
-    if config.ACTIVITY_BY_KEY[act_key].sops:
+    if config.activity(act_key).sops:
         _sop_tasks(ctx, truck, act_key)
     else:
         _manual_activity(ctx, truck, act_key, act)
-
-    st.write("")
-    _delay_form(ctx, truck, acts)
-    _history(ctx, truck, act_key)
 
 
 def _activity_header(ctx: Ctx, act_key: str, act: pd.Series) -> None:
@@ -133,7 +136,7 @@ def _apply_edits(base: pd.DataFrame, editor_key: str) -> pd.DataFrame:
 
 def _sop_tasks(ctx: Ctx, truck: str, act_key: str) -> None:
     t, user = ctx.t, ctx.user
-    sops = config.ACTIVITY_BY_KEY[act_key].sops
+    sops = config.activity(act_key).sops
     note(t("sop_help", sops=" + ".join(config.SOP_TITLES[s] for s in sops)))
 
     status_labels = {t("ts_" + s): s for s in config.TASK_STATUSES}
@@ -237,7 +240,7 @@ def _task_details(ctx: Ctx, truck: str, act_key: str, base: pd.DataFrame) -> Non
                  (t("col_cond"), t("yes") if m.conditional else t("no"))]
         st.markdown(" · ".join(f"**{k}:** {v}" for k, v in facts if str(v).strip()))
     notes = load_notes()
-    notes = notes[notes.sop.isin(config.ACTIVITY_BY_KEY[act_key].sops)]
+    notes = notes[notes.sop.isin(config.activity(act_key).sops)]
     if len(notes):
         with st.expander(t("engineering_notes"), icon=":material/engineering:"):
             show = notes.assign(note=notes.note_jp.where((lang == "ja") & (notes.note_jp != ""), notes.note_en))
@@ -301,7 +304,7 @@ def _delay_form(ctx: Ctx, truck: str, acts: pd.DataFrame) -> None:
 
 
 # ─── Historial ────────────────────────────────────────────────────────────
-def _history(ctx: Ctx, truck: str, act_key: str) -> None:
+def history(ctx: Ctx, truck: str, act_key: str) -> None:
     t, p = ctx.t, ctx.project
     tz = p.settings.get("timezone", "UTC")
     log = p.task_log[(p.task_log.truck == truck) & (p.task_log.act_key == act_key)]

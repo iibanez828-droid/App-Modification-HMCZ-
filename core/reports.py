@@ -12,8 +12,7 @@ from core.project import Project
 
 
 def _act(key: str) -> str:
-    a = config.ACTIVITY_BY_KEY.get(key)
-    return a.gantt_name if a else (key or "")
+    return config.activity(key).gantt_name if key else ""
 
 
 def truck_summary(p: Project) -> pd.DataFrame:
@@ -31,7 +30,7 @@ def activity_table(p: Project) -> pd.DataFrame:
     a = p.activities.sort_values(["truck", "order"])
     return pd.DataFrame({
         "Truck": a.truck, "Activity": a.act_key.map(_act), "External": a.external,
-        "SOP": a.act_key.map(lambda k: " + ".join(config.ACTIVITY_BY_KEY[k].sops)),
+        "SOP": a.act_key.map(lambda k: " + ".join(config.activity(k).sops)),
         "Status": a.status, "Progress %": (a.progress * 100).round(1),
         "Original start": a.base_start, "Original end": a.base_end,
         "Forecast start": a.fc_start, "Forecast end": a.fc_end,

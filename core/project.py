@@ -61,6 +61,7 @@ class Project:
     plan_log: pd.DataFrame            # cambios de fechas del administrador
     acks: dict[str, dict] = field(default_factory=dict)
     truck_cal: dict[str, WorkCalendar] = field(default_factory=dict)
+    custom_acts: dict[str, config.Activity] = field(default_factory=dict)  # actividades creadas en la app
 
     # ── Consultas frecuentes ────────────────────────────────────────────
     def calendar(self, truck: str) -> WorkCalendar:
@@ -122,6 +123,49 @@ def _activity_status(progress: float, start: date | None, end: date | None, toda
     return "not_started"
 
 
+def _new_row(truck: str, act: str, start: str = "", end: str = "") -> dict:
+    return {"truck": truck, "act_key": act, "base_start": start or "", "base_end": end or "", "assigned_to": "",
+            "imported_progress": "", "fc_start": start or "", "fc_end": end or ""}
+
+
+def _apply_scope(ev: dict, rows: dict, task_sel: dict, custom: dict) -> None:
+    """Cambios de alcance del administrador:
+    - new_activity: crea una actividad general (sin SOP) y la agrega a `trucks`.
+    - add_activity: agrega una actividad existente a un camión (con las tareas SOP elegidas).
+    - remove_activity: quita una actividad de un camión (su historial se conserva).
+    - set_tasks: cambia las tareas SOP incluidas en una actividad de un camión.
+    - add_truck: agrega un camión nuevo con sus actividades y tareas SOP.
+    - remove_truck: quita el camión del plan (su historial se conserva)."""
+    op, truck = ev.get("op"), ev.get("truck", "")
+
+    def add(truck: str, act: str, tasks=None, start: str = "", end: str = "") -> None:
+        if not truck or not act or (truck, act) in rows:
+            return
+        rows[(truck, act)] = _new_row(truck, act, start, end)
+        task_sel.pop((truck, act), None)
+        if tasks is not None and config.activity(act).sops:
+            task_sel[(truck, act)] = list(tasks)
+
+    if op == "new_activity" and ev.get("act") and ev.get("name"):
+        custom[ev["act"]] = config.Activity(ev["act"], ev["name"], (), bool(ev.get("external")), name=ev["name"])
+        for tr in ev.get("trucks", []):
+            add(tr, ev["act"], None, ev.get("start", ""), ev.get("end", ""))
+    elif op == "add_activity":
+        add(truck, ev.get("act"), ev.get("tasks"), ev.get("start", ""), ev.get("end", ""))
+    elif op == "remove_activity":
+        rows.pop((truck, ev.get("act")), None)
+        task_sel.pop((truck, ev.get("act")), None)
+    elif op == "set_tasks" and (truck, ev.get("act")) in rows:
+        task_sel[(truck, ev["act"])] = list(ev.get("tasks", []))
+    elif op == "remove_truck":
+        for key in [k for k in rows if k[0] == truck]:
+            rows.pop(key)
+            task_sel.pop(key, None)
+    elif op == "add_truck" and truck and not any(k[0] == truck for k in rows):
+        for a in ev.get("acts", []):
+            add(truck, a.get("act"), a.get("tasks"), a.get("start", ""), a.get("end", ""))
+
+
 def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> Project:
     events = read_events(snapshot)
     settings = read_settings(snapshot, events["settings"])
@@ -131,28 +175,40 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
     holidays = settings.get("holidays", [])
 
     # ── Plan: original + cambios del administrador ──────────────────────
-    acts = read_baseline(snapshot)
-    acts["fc_start"], acts["fc_end"] = acts["base_start"], acts["base_end"]
-    idx = {(r.truck, r.act_key): i for i, r in acts.iterrows()}
+    # Los cambios de alcance (scope) y de fechas (plan) se aplican en orden
+    # cronológico: una actividad agregada después puede recibir fechas.
+    base = read_baseline(snapshot)
+    cols = list(base.columns) + ["fc_start", "fc_end"]
+    rows: dict[tuple[str, str], dict] = {}
+    for r in base.to_dict("records"):
+        rows[(r["truck"], r["act_key"])] = {**r, "fc_start": r["base_start"], "fc_end": r["base_end"]}
+    task_sel: dict[tuple[str, str], list[str]] = {}  # tareas SOP incluidas (sin entrada = todas)
+    custom: dict[str, config.Activity] = {}
     weekend: dict[str, dict] = {}
     plan_rows = []
-    for ev in events["plan"]:
+    for ev in sorted(events["scope"] + events["plan"], key=lambda e: e["ts"]):
+        if ev["kind"] == "scope":
+            _apply_scope(ev, rows, task_sel, custom)
+            continue
         truck = ev.get("truck")
         if "weekend" in ev:
             weekend[truck] = ev["weekend"]
         for ch in ev.get("changes", []):
-            i = idx.get((truck, ch.get("act")))
-            if i is None:
+            row = rows.get((truck, ch.get("act")))
+            if row is None:
                 continue
             for fld in ("fc_start", "fc_end", "assigned_to"):
                 if fld in ch:
-                    acts.at[i, fld] = ch[fld] or ""
+                    row[fld] = ch[fld] or ""
             for fld in ("base_start", "base_end"):  # solo se completa si estaba vacía
-                if ch.get(fld) and not acts.at[i, fld]:
-                    acts.at[i, fld] = ch[fld]
+                if ch.get(fld) and not row[fld]:
+                    row[fld] = ch[fld]
             plan_rows.append({"ts": ev["ts"], "user": ev["user"], "truck": truck, "act_key": ch.get("act"),
                               "fc_start": ch.get("fc_start", ""), "fc_end": ch.get("fc_end", ""),
                               "reason": ev.get("reason", "")})
+    config.set_custom_activities(custom)
+    acts = pd.DataFrame(list(rows.values()), columns=cols).fillna("")
+    idx = {(r.truck, r.act_key): i for i, r in acts.iterrows()}
 
     truck_cal = {
         t: WorkCalendar.build(weekend.get(t, {}).get("sat", False), weekend.get(t, {}).get("sun", False), holidays)
@@ -176,16 +232,18 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
     cat = load_catalog()
     task_frames = []
     for (truck, act_key) in idx:
-        sops = config.ACTIVITY_BY_KEY[act_key].sops
+        sops = config.activity(act_key).sops
         if not sops:
             continue
         t = cat[cat.sop.isin(sops)].copy()
+        if (truck, act_key) in task_sel:
+            t = t[t.task_id.isin(task_sel[(truck, act_key)])]
         t["sop_order"] = t.sop.map({s: n for n, s in enumerate(sops)})
         t = t.sort_values(["sop_order", "seq"])
         t.insert(0, "truck", truck)
         t.insert(1, "act_key", act_key)
         task_frames.append(t)
-    tasks = pd.concat(task_frames, ignore_index=True)
+    tasks = pd.concat(task_frames, ignore_index=True) if task_frames else cat.iloc[0:0].assign(truck="", act_key="")
     rec = latest[latest.task_id != config.ACTIVITY_TASK_ID].drop(columns=["progress"])
     tasks = tasks.merge(rec, on=["truck", "act_key", "task_id"], how="left")
     tasks["status"] = tasks["status"].fillna("not_started")
@@ -200,7 +258,7 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
     progress, has_records, mh = [], [], []
     for _, a in acts.iterrows():
         key = (a.truck, a.act_key)
-        if config.ACTIVITY_BY_KEY[a.act_key].sops:
+        if config.activity(a.act_key).sops:
             t = tasks[(tasks.truck == a.truck) & (tasks.act_key == a.act_key)]
             applicable = t[t.status != "na"]
             if key in has_task_rec:
@@ -224,9 +282,9 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
     acts["progress"] = progress
     acts["has_records"] = has_records
     acts["actual_mh"] = mh
-    acts["order"] = acts.act_key.map(config.ACTIVITY_ORDER)
-    acts["external"] = acts.act_key.isin(config.EXTERNAL_KEYS)
-    acts["has_sop"] = acts.act_key.map(lambda k: bool(config.ACTIVITY_BY_KEY[k].sops))
+    acts["order"] = acts.act_key.map(config.activity_order)
+    acts["external"] = acts.act_key.map(lambda k: config.activity(k).external)
+    acts["has_sop"] = acts.act_key.map(lambda k: bool(config.activity(k).sops))
     for col in ("base_start", "base_end", "fc_start", "fc_end"):
         acts[col] = acts[col].map(_d)
     acts["status"] = [
@@ -286,4 +344,4 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
 
     return Project(settings=settings, today=today, activities=acts, trucks=trucks, tasks=tasks,
                    task_log=task_log, delays=delays, comments=comments, plan_log=plan_log,
-                   acks=acks, truck_cal=truck_cal)
+                   acks=acks, truck_cal=truck_cal, custom_acts=custom)

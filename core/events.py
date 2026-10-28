@@ -11,7 +11,8 @@ leyendo los eventos en orden.
 
 Tipos: task (avance de tareas), delay (notas de atraso), plan (fechas del
 pronóstico y días de fin de semana), ack (alerta de trunnion atendida),
-settings (configuración general).
+settings (configuración general), scope (camiones, actividades y tareas SOP
+que el administrador agrega o quita del plan).
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ import pandas as pd
 from core import config
 from storage.base import Store
 
-KINDS = ("task", "delay", "plan", "ack", "settings")
+KINDS = ("task", "delay", "plan", "ack", "settings", "scope")
 BASELINE_PATH = "plan/baseline.csv"
 SETTINGS_PATH = "plan/settings.json"
 
