@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-10-29T15:13:59.925009+00:00",
+ "user": "admin",
+ "truck": "RD222",
+ "act": "trailing_assy",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 4.0,
+   "supervisor": "Grant",
+   "technicians": "HCMZ",
+   "date": "2026-10-28",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
