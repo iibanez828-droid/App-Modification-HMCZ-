@@ -43,7 +43,10 @@ TEXTS: dict[str, tuple[str, str]] = {
     # ── Inicio de sesión y contraseña ──
     "login": ("Sign in", "ログイン"),
     "logout": ("Sign out", "ログアウト"),
-    "login_subtitle": ("EH5000 fleet · sign in", "EH5000 車両 · ログイン"),
+    "public_subtitle": ("View · project status (read only)", "閲覧 · プロジェクト状況（閲覧のみ）"),
+    "public_help": ("Read-only view of the project schedule. Sign in on the right to record progress or manage the plan.",
+                    "工程の閲覧専用ページです。進捗の入力や計画の管理は、右側からログインしてください。"),
+    "public_footer": ("Read-only view", "閲覧専用"),
     "login_failed": ("Incorrect username or password.", "ユーザー名またはパスワードが正しくありません。"),
     "login_help": ("Forgot your password? Ask the app owner to reset it.",
                    "パスワードを忘れた場合は、アプリの管理者（オーナー）にリセットを依頼してください。"),
@@ -239,6 +242,10 @@ TEXTS: dict[str, tuple[str, str]] = {
     "gantt_mode": ("Gantt view", "ガント表示"),
     "gantt_by_truck": ("By truck", "車両別"),
     "gantt_by_activity": ("By activity", "作業項目別"),
+    "gantt_fleet_title": ("Gantt truck modification", "車両改造ガント"),
+    "gantt_operating_title": ("Gantt operating machine", "稼働機械ガント"),
+    "no_operating_trucks": ("No operating machines yet. Trucks added by the administrator appear here.",
+                            "稼働機械はまだありません。管理者が追加した車両がここに表示されます。"),
     "select_trucks": ("Select at least one truck.", "車両を1台以上選択してください。"),
     "gantt_help": ("Grey bar = original plan · coloured bar = forecast (colour = status, label = progress). "
                    "Zoom by dragging; double-click to reset.",
@@ -339,10 +346,11 @@ TEXTS: dict[str, tuple[str, str]] = {
     "remove_confirm": ("I confirm removing «{act}» from {truck}", "{truck} から「{act}」を削除することを確認します"),
     "scope_saved": ("Plan scope updated.", "計画範囲を更新しました。"),
     "add_truck": ("Add truck", "車両を追加"),
-    "add_truck_help": ("Adds a new truck to the whole app. Choose its activities and, for activities with SOP, which "
+    "add_truck_help": ("Adds a new truck (operating machine) to the whole app, with its own Gantt: "
+                       "<b>Gantt operating machine</b>. Choose its activities and, for activities with SOP, which "
                        "sub-tasks apply. Set its dates afterwards in the Plan tab.",
-                       "アプリ全体に新しい車両を追加します。作業項目と、SOP 付き作業項目の対象サブタスクを選択してください。"
-                       "日付は後で計画タブで設定します。"),
+                       "新しい車両（稼働機械）をアプリ全体に追加します。専用のガント<b>「稼働機械ガント」</b>に表示されます。"
+                       "作業項目と、SOP 付き作業項目の対象サブタスクを選択してください。日付は後で計画タブで設定します。"),
     "truck_id": ("Truck number", "車両番号"),
     "err_truck_id": ("Use 2–12 letters, numbers or hyphens for the truck number.", "車両番号は英数字またはハイフン 2～12 文字で入力してください。"),
     "err_truck_exists": ("Truck {truck} already exists.", "車両 {truck} は既に存在します。"),

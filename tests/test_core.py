@@ -163,6 +163,8 @@ def test_scope_add_truck(store):
     assert p.truck_row("RD240").status == "no_dates"
     assert "RD240" in p.visible_trucks()
     assert len(p.tasks[p.tasks.truck == "RD240"]) == 3
+    assert p.group_trucks("operating") == ["RD240"] and "RD240" not in p.group_trucks("fleet")
+    assert len(p.group_trucks("fleet")) == 12
     assert any(a["type"] == "missing_dates" and a["truck"] == "RD240" for a in p.alerts())
     write_event(store, "scope", {"op": "remove_truck", "truck": "RD240"}, "a")
     write_event(store, "scope", {"op": "remove_truck", "truck": "RD231"}, "a")

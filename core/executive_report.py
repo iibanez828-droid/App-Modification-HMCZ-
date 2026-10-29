@@ -215,9 +215,9 @@ def _truck_table(pdf: _Report, p: Project) -> None:
                    "upcoming trucks). MH = actual man-hours recorded.")
 
 
-def _timeline(pdf: _Report, p: Project) -> None:
-    tr = p.trucks.sort_values("truck")
-    acts = p.activities
+def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
+    tr = p.trucks[p.trucks.truck.isin(trucks)].sort_values("truck")
+    acts = p.activities[p.activities.truck.isin(trucks)]
     base_start = acts.groupby("truck").base_start.agg(lambda s: min((d for d in s if d), default=None))
     dates = [d for col in ("start", "end", "base_end") for d in tr[col] if d] + [d for d in base_start if d] + [p.today]
     lo, hi = min(dates) - timedelta(days=2), max(dates) + timedelta(days=3)
@@ -388,8 +388,14 @@ def build_executive_pdf(p: Project) -> bytes:
     pdf.section("Status by truck")
     _truck_table(pdf, p)
 
-    pdf.section("Fleet timeline (original plan vs. forecast)", need=6.2 * len(tr) + 25)
-    _timeline(pdf, p)
+    # La flota original y las máquinas en operación (agregadas en la app) van en cronogramas separados
+    fleet, operating = p.group_trucks("fleet"), p.group_trucks("operating")
+    if fleet:
+        pdf.section("Gantt truck modification (original plan vs. forecast)", need=6.2 * len(fleet) + 25)
+        _timeline(pdf, p, fleet)
+    if operating:
+        pdf.section("Gantt operating machine (original plan vs. forecast)", need=6.2 * len(operating) + 25)
+        _timeline(pdf, p, operating)
 
     pdf.section("Activity summary - all trucks", need=7 * len(_plan_activities(p)) + 20)
     _activity_summary(pdf, p)

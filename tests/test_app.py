@@ -54,6 +54,24 @@ def test_login_always_shown_and_admin_view(at):
     assert not any(s.label == "View" for s in at.get("segmented_control"))  # el admin no ve la vista de supervisor
 
 
+def test_public_view_shows_gantts_read_only(at, tmp_path):
+    from core.events import write_event
+    from storage.local_store import LocalStore
+    write_event(LocalStore(tmp_path / "data"), "scope", {"op": "add_truck", "truck": "RD240", "acts": [
+        {"act": "trailing_lower", "tasks": None}]}, "ana")
+    at.run()
+    assert not at.exception
+    assert "user" not in at.session_state
+    titles = [m.value for m in at.markdown]
+    assert any("Gantt truck modification" in v for v in titles)
+    assert any("Gantt operating machine" in v for v in titles)
+    assert not at.tabs and not at.get("data_editor")  # nada editable sin iniciar sesión
+    assert [b.label for b in at.button] == ["Sign in"]
+    at.session_state["pub_mode"] = "activity"
+    at.run()
+    assert not at.exception
+
+
 def test_login_fails_with_wrong_password(at):
     _login(at, "ana", "wrong-password")
     assert "user" not in at.session_state

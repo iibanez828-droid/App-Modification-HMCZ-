@@ -10,6 +10,9 @@ Reglas de negocio (todas en este archivo):
   propia programada (no cuenta la espera por el trabajo externo de trunnion).
 - Visibilidad: un camión aparece cuando faltan `lookahead_days` días o menos
   para su inicio, o cuando ya empezó.
+- Grupo: los camiones del plan original del Gantt forman la flota ("fleet");
+  los que agrega el administrador en la app son máquinas en operación
+  ("operating") y tienen su propio Gantt. Las métricas son las mismas.
 """
 
 from __future__ import annotations
@@ -72,6 +75,9 @@ class Project:
 
     def truck_activities(self, truck: str) -> pd.DataFrame:
         return self.activities[self.activities.truck == truck].sort_values("order")
+
+    def group_trucks(self, group: str) -> list[str]:
+        return self.trucks[self.trucks.group == group].truck.tolist()
 
     def visible_trucks(self) -> list[str]:
         return self.trucks[self.trucks.status.isin(VISIBLE_STATUSES)].truck.tolist()
@@ -178,6 +184,7 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
     # Los cambios de alcance (scope) y de fechas (plan) se aplican en orden
     # cronológico: una actividad agregada después puede recibir fechas.
     base = read_baseline(snapshot)
+    fleet = set(base.truck)
     cols = list(base.columns) + ["fc_start", "fc_end"]
     rows: dict[tuple[str, str], dict] = {}
     for r in base.to_dict("records"):
@@ -332,6 +339,7 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
             "actual_mh": float(g.actual_mh.sum()),
             "sat": cal.saturday, "sun": cal.sunday,
             "days_to_start": (start - today).days if start else None,
+            "group": "fleet" if truck in fleet else "operating",
         })
     trucks = pd.DataFrame(truck_rows)
 
