@@ -1,6 +1,7 @@
 """Gantt interactivo (Plotly): plan original (barra gris delgada) y pronóstico
 (barra de color según el estado), con la línea de hoy. Dos vistas: por
-actividad de cada camión y por camión (ventana completa)."""
+actividad de cada camión y por camión (ventana completa). La flota original y
+las máquinas en operación (camiones agregados en la app) van en Gantt separados."""
 
 from __future__ import annotations
 
@@ -8,16 +9,32 @@ from datetime import timedelta
 
 import pandas as pd
 import plotly.graph_objects as go
+import streamlit as st
 
 from core import config
 from core.project import Project
-from ui.common import T, act_name, fmt_date, fmt_pct
+from ui.common import T, act_name, fmt_date, fmt_pct, note, section
 
 DAY_MS = 86_400_000
 ACT_COLORS = {
     "completed": "#2E7D32", "in_progress": config.ORANGE, "overdue": "#C62828",
     "not_started": "#1565C0", "no_dates": "#6D4C41",
 }
+
+
+def gantt_panels(p: Project, t: T, trucks: list[str], mode: str, show_baseline: bool, key: str) -> None:
+    """Gantt de la flota y, aparte, el Gantt Operating Machine (camiones agregados en la app)."""
+    build = truck_gantt_figure if mode == "truck" else gantt_figure
+    for group in ("fleet", "operating"):
+        section(t(f"gantt_{group}_title"))
+        members = p.group_trucks(group)
+        selected = sorted(tr for tr in trucks if tr in members)
+        if not selected:
+            note(t("no_operating_trucks") if group == "operating" and not members else t("select_trucks"))
+            continue
+        st.plotly_chart(build(p, t, selected, show_baseline), width="stretch", key=f"{key}_{group}",
+                        config={"displaylogo": False, "modeBarButtonsToRemove": ["select2d", "lasso2d"]})
+    st.caption(t("gantt_help"))
 
 
 def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True) -> go.Figure:

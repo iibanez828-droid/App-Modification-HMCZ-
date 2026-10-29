@@ -20,7 +20,7 @@ from core.workdays import WorkCalendar
 from ui.common import (Ctx, act_name, fmt_date, fmt_pct, fmt_ts, kpi_cards, note, password_form, safe_write, section,
                        truck_badge, truck_label, esc)
 from ui import supervisor
-from ui.gantt import gantt_figure, truck_gantt_figure
+from ui.gantt import gantt_panels
 
 EDITABLE_STATUSES = ("in_progress", "overdue", "upcoming", "no_dates")
 
@@ -192,13 +192,7 @@ def _gantt(ctx: Ctx) -> None:
     mode = c1.segmented_control(t("gantt_mode"), ["truck", "activity"], default="truck", key="g_mode",
                                 format_func=lambda m: t("gantt_by_" + m), label_visibility="collapsed") or "truck"
     show_base = c2.checkbox(t("show_baseline"), value=True, key="g_base")
-    if not trucks:
-        note(t("select_trucks"))
-        return
-    build = truck_gantt_figure if mode == "truck" else gantt_figure
-    st.plotly_chart(build(p, t, sorted(trucks), show_base), width="stretch",
-                    config={"displaylogo": False, "modeBarButtonsToRemove": ["select2d", "lasso2d"]})
-    st.caption(t("gantt_help"))
+    gantt_panels(p, t, trucks, mode, show_base, "g_admin")
 
 
 # ─── 3. Plan (fechas del pronóstico) ──────────────────────────────────────

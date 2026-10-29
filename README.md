@@ -86,7 +86,7 @@ pip install -r requirements-dev.txt
 streamlit run app.py
 ```
 
-Sin archivo de secretos, la app guarda todo en `local_data/` (está en `.gitignore`). Al abrirla por primera vez pide crear el **primer administrador** y carga el plan desde el Gantt.
+Sin archivo de secretos, la app guarda todo en `local_data/` (está en `.gitignore`). Para entrar en modo local, define el usuario maestro en `.streamlit/secrets.toml` (sección `[master]`) y pulsa **Load plan from the Gantt** la primera vez.
 
 Pruebas: `pytest -q`
 
@@ -111,7 +111,8 @@ Si el token vence, la app muestra un aviso al guardar. Se genera uno nuevo y se 
 
 ## Usuarios
 
-- La app siempre abre en **inicio de sesión**. No tiene pantalla de registro ni gestión de usuarios.
+- La app abre en la vista pública **View**: cualquiera con el link ve los Gantt en modo solo lectura (*Gantt truck modification* y *Gantt operating machine*). El inicio de sesión está a la derecha. No hay pantalla de registro ni gestión de usuarios.
+- **Gantt operating machine:** los camiones que el administrador agrega desde la app (pestaña Trucks → *Add truck*) tienen su propio Gantt, separado del de la flota original. Se miden con las mismas métricas y actividades.
 - **Roles:** cada rol ve solo su vista.
   - **Admin:** resumen, Gantt, plan, camiones, atrasos, reportes y configuración del proyecto.
   - **Supervisor:** registro de avance de tareas, horas-hombre, personal y atrasos.

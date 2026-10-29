@@ -17,6 +17,7 @@ from core.project import build_project
 from storage import StorageError, local_dir, make_store
 from ui import admin, supervisor
 from ui.common import Ctx, note, password_form, show_flash
+from ui.gantt import gantt_panels
 from ui.theme import footer, header, inject_css, sidebar_logo
 
 st.set_page_config(page_title="HMCZ Truck Modification", page_icon=str(config.LOGO_PATH), layout="wide",
@@ -78,11 +79,10 @@ def language_picker(where) -> None:
         st.rerun()
 
 
-# ─── Inicio de sesión ─────────────────────────────────────────────────────
-def login_page() -> None:
-    header(config.PROJECT_NAME, t("login_subtitle"))
-    _, mid, _ = st.columns([1, 1.2, 1])
-    with mid:
+# ─── Vista pública (sin usuario) e inicio de sesión ───────────────────────
+def login_form() -> None:
+    with st.container(border=True):
+        st.subheader(t("login"), anchor=False)
         language_picker(st)
         with st.form("login"):
             username = st.text_input(t("username"))
@@ -99,8 +99,27 @@ def login_page() -> None:
         st.caption(t("login_help"))
 
 
+def public_page() -> None:
+    """View: cualquiera con el link ve los Gantt (solo lectura); el inicio de sesión va a la derecha."""
+    header(config.PROJECT_NAME, f"{config.FLEET} · {t('public_subtitle')}")
+    view_col, login_col = st.columns([3.3, 1], gap="large")
+    with login_col:
+        login_form()
+    with view_col:
+        if project is None:
+            note(t("not_initialized"))
+            return
+        note(t("public_help"))
+        c1, c2 = st.columns([2, 3], vertical_alignment="center")
+        mode = c1.segmented_control(t("gantt_mode"), ["truck", "activity"], default="truck", key="pub_mode",
+                                    format_func=lambda m: t("gantt_by_" + m), label_visibility="collapsed") or "truck"
+        show_base = c2.checkbox(t("show_baseline"), value=True, key="pub_base")
+        gantt_panels(project, t, project.trucks.truck.tolist(), mode, show_base, "g_public")
+    footer(f"LANDCROS · {config.PROJECT_NAME}", t("public_footer"))
+
+
 if "user" not in ss:
-    login_page()
+    public_page()
     st.stop()
 
 # La sesión se valida contra el archivo de usuarios en cada carga: si el dueño
