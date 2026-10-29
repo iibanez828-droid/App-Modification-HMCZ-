@@ -1,0 +1,43 @@
+{
+ "kind": "scope",
+ "ts": "2026-10-29T09:19:13.212625+00:00",
+ "user": "admin",
+ "op": "add_truck",
+ "truck": "RD237",
+ "acts": [
+  {
+   "act": "trailing_lower",
+   "tasks": null
+  },
+  {
+   "act": "trunnion_mod",
+   "tasks": null
+  },
+  {
+   "act": "trailing_assy",
+   "tasks": null
+  },
+  {
+   "act": "nose_cone",
+   "tasks": [
+    "NC-001",
+    "NC-002",
+    "NC-003",
+    "NC-004",
+    "NC-004.1",
+    "NC-005",
+    "NC-006",
+    "NC-007",
+    "NC-008",
+    "NC-009",
+    "NC-010",
+    "NC-011",
+    "NC-012",
+    "NC-013",
+    "NC-014",
+    "NC-015",
+    "NC-016"
+   ]
+  }
+ ]
+}
