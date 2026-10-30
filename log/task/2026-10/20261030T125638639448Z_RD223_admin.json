@@ -1,0 +1,200 @@
+{
+ "kind": "task",
+ "ts": "2026-10-30T12:56:38.639448+00:00",
+ "user": "admin",
+ "truck": "RD223",
+ "act": "rhs_seat",
+ "updates": [
+  {
+   "task_id": "MF-001",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-002",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-003",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-004",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-005",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-006",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-007",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-008",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-009",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-010",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-011",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-012",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-013",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-014",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-015",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-016",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-017",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-018",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "MF-019",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  }
+ ],
+ "comment": ""
+}
