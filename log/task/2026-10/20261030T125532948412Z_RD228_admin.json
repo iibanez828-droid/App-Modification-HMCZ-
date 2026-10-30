@@ -1,0 +1,390 @@
+{
+ "kind": "task",
+ "ts": "2026-10-30T12:55:32.948412+00:00",
+ "user": "admin",
+ "truck": "RD228",
+ "act": "lhs_seat",
+ "updates": [
+  {
+   "task_id": "LS-001",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-002",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-003",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-004",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-005",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-006",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-007",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-008",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-009",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-010",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-011",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-012",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-013",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-014",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-015",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-016",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-017",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LS-018",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-001",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-002",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-003",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-004",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-005",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-006",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-007",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-008",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-009",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-010",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-011",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-012",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-013",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-014",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-015",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-016",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-017",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-018",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-019",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "LHS-020",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  }
+ ],
+ "comment": ""
+}
