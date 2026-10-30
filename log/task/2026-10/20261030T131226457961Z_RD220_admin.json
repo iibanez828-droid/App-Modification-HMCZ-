@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-10-30T13:12:26.457961+00:00",
+ "user": "admin",
+ "truck": "RD220",
+ "act": "cx_release_to_s3_assembly",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 0.0,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-12",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
