@@ -1,0 +1,8 @@
+{
+ "kind": "scope",
+ "ts": "2026-10-30T06:22:45.511706+00:00",
+ "user": "admin",
+ "op": "remove_activity",
+ "truck": "RD223",
+ "act": "lhs_seat"
+}
