@@ -1,0 +1,180 @@
+{
+ "kind": "task",
+ "ts": "2026-10-30T12:53:14.745594+00:00",
+ "user": "admin",
+ "truck": "RD228",
+ "act": "nose_cone",
+ "updates": [
+  {
+   "task_id": "NC-001",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-002",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-003",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-004",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-004.1",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-005",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-006",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-007",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-008",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-009",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-010",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-011",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-012",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-013",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-014",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-015",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  },
+  {
+   "task_id": "NC-016",
+   "status": "done",
+   "actual_mh": null,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-10-30",
+   "qc_result": "accepted",
+   "remarks": ""
+  }
+ ],
+ "comment": ""
+}
