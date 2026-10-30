@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-10-30T12:53:44.855924+00:00",
+ "user": "admin",
+ "truck": "RD222",
+ "act": "trailing_lower",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 0.0,
+   "supervisor": "Supervisor user",
+   "technicians": "",
+   "date": "2026-10-28",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
