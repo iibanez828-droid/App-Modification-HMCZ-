@@ -1,0 +1,25 @@
+{
+ "kind": "scope",
+ "ts": "2026-10-30T06:24:51.459127+00:00",
+ "user": "admin",
+ "op": "new_activity",
+ "act": "cx_release_to_s3_assembly",
+ "name": "Release to S3 ( Assembly)",
+ "external": false,
+ "trucks": [
+  "RD220",
+  "RD221",
+  "RD222",
+  "RD223",
+  "RD224",
+  "RD225",
+  "RD226",
+  "RD227",
+  "RD228",
+  "RD229",
+  "RD230",
+  "RD231"
+ ],
+ "start": "2026-10-23",
+ "end": "2026-10-23"
+}
