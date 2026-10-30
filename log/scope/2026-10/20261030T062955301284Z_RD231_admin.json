@@ -1,0 +1,8 @@
+{
+ "kind": "scope",
+ "ts": "2026-10-30T06:29:55.301284+00:00",
+ "user": "admin",
+ "op": "remove_activity",
+ "truck": "RD231",
+ "act": "cx_release_to_s3_assembly"
+}
