@@ -176,7 +176,7 @@ def _summary_text(p: Project) -> list[str]:
 
 def _truck_table(pdf: _Report, p: Project) -> None:
     cols = [("Truck", 16, "L"), ("Status", 24, "C"), ("Progress", 34, "L"), ("Fcst start", 22, "C"),
-            ("Fcst end", 22, "C"), ("Original end", 22, "C"), ("Delay (wd)", 18, "C"), ("Own days", 14, "C"),
+            ("Fcst end", 22, "C"), ("Actual end", 22, "C"), ("Delay (wd)", 18, "C"), ("Own days", 14, "C"),
             ("MH", 14, "R")]
     pdf.table_head(cols)
     limit = int(p.settings.get("max_working_days", 5))
@@ -210,7 +210,7 @@ def _truck_table(pdf: _Report, p: Project) -> None:
     pdf.set_font("Helvetica", "", 6.5)
     pdf.set_text_color(*GREY)
     pdf.ln(1)
-    pdf.multi_cell(CONTENT_W, 3.5, "Delay = working days between the original end and the forecast end. "
+    pdf.multi_cell(CONTENT_W, 3.5, "Delay = working days between the actual end and the forecast end. "
                    f"Own days = working days with in-house work scheduled (limit {limit}; highlighted only for active or "
                    "upcoming trucks). MH = actual man-hours recorded.")
 
@@ -326,7 +326,7 @@ def _activity_summary(pdf: _Report, p: Project) -> None:
     pdf.set_text_color(*GREY)
     pdf.ln(1)
     pdf.multi_cell(CONTENT_W, 3.5, f"Counts are numbers of trucks (fleet of {n_trucks}). Behind plan = forecast end later "
-                   "than the original end. (ext.) = performed by an external contractor.")
+                   "than the actual end. (ext.) = performed by an external contractor.")
 
 
 def _delays(pdf: _Report, p: Project) -> None:
@@ -406,6 +406,6 @@ def build_executive_pdf(p: Project) -> bytes:
     pdf.ln(4)
     pdf.set_font("Helvetica", "I", 7)
     pdf.set_text_color(*GREY)
-    pdf.cell(CONTENT_W, 4, _txt(f"Generated {_fd(p.today)} ({p.settings.get('timezone', 'UTC')}) from the HMCZ tracking app."),
+    pdf.cell(CONTENT_W, 4, _txt(f"Generated {_fd(p.today)} ({p.settings.get('timezone', 'UTC')}) from the HCMZ tracking app."),
              new_x="LMARGIN", new_y="NEXT")
     return bytes(pdf.output())

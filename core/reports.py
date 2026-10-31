@@ -19,7 +19,7 @@ def truck_summary(p: Project) -> pd.DataFrame:
     df = p.trucks.copy()
     return pd.DataFrame({
         "Truck": df.truck, "Status": df.status, "Progress %": (df.progress * 100).round(1),
-        "Forecast start": df.start, "Forecast end": df.end, "Original end": df.base_end,
+        "Forecast start": df.start, "Forecast end": df.end, "Actual end": df.base_end,
         "Delay (working days)": df.delay_wd, "Own-work days": df.work_days,
         "Over limit": df.over_limit, "Actual MH": df.actual_mh.round(1),
         "Saturday": df.sat, "Sunday": df.sun,
@@ -30,23 +30,11 @@ def activity_table(p: Project) -> pd.DataFrame:
     a = p.activities.sort_values(["truck", "order"])
     return pd.DataFrame({
         "Truck": a.truck, "Activity": a.act_key.map(_act), "External": a.external,
-        "SOP": a.act_key.map(lambda k: " + ".join(config.activity(k).sops)),
         "Status": a.status, "Progress %": (a.progress * 100).round(1),
-        "Original start": a.base_start, "Original end": a.base_end,
+        "Actual start": a.base_start, "Actual end": a.base_end,
         "Forecast start": a.fc_start, "Forecast end": a.fc_end,
         "Delay (working days)": a.delay_wd, "Actual MH": a.actual_mh.round(1),
         "Assigned to": a.assigned_to, "Imported from Gantt": ~a.has_records,
-    })
-
-
-def task_table(p: Project) -> pd.DataFrame:
-    t = p.tasks
-    return pd.DataFrame({
-        "Truck": t.truck, "Activity": t.act_key.map(_act), "SOP": t.sop, "Task ID": t.task_id,
-        "Stage": t.stage, "Task (EN)": t.desc_en, "Task (JP)": t.desc_jp, "QC gate": t.qc_gate,
-        "Conditional": t.conditional, "Status": t.status, "Actual MH": t.actual_mh,
-        "Supervisor": t.supervisor, "Technicians": t.technicians, "Date": t.date,
-        "QC result": t.qc_result, "Remarks": t.remarks, "Updated by": t.user, "Updated (UTC)": t.ts,
     })
 
 
@@ -54,7 +42,6 @@ def build_excel(p: Project) -> bytes:
     sheets = {
         "Trucks": truck_summary(p),
         "Activities": activity_table(p),
-        "SOP tasks": task_table(p),
         "Task log": p.task_log.assign(act_key=p.task_log.act_key.map(_act)),
         "Delay notes": p.delays.assign(act=p.delays.act.map(_act)),
         "Comments": p.comments.assign(act_key=p.comments.act_key.map(_act)),

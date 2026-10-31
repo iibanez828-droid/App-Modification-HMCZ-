@@ -1,9 +1,10 @@
 """Estado actual del proyecto, calculado a partir del plan original y los eventos.
 
 Reglas de negocio (todas en este archivo):
-- Avance de una actividad con SOP = tareas terminadas ÷ tareas aplicables
-  (las tareas condicionales marcadas N/A no cuentan).
-- Avance de una actividad sin SOP = porcentaje que registra el supervisor.
+- Avance de una actividad = porcentaje (0–100) que registra el supervisor.
+- Si una actividad todavía no tiene registro en %, pero tiene registros por
+  tareas del sistema anterior, se conserva ese avance: tareas terminadas ÷
+  tareas aplicables (las marcadas N/A no cuentan).
 - Mientras una actividad no tenga registros, se usa el avance importado del Gantt.
 - Avance de un camión = promedio simple de sus actividades.
 - Días de trabajo propio = días hábiles en que hay al menos una actividad
@@ -57,7 +58,7 @@ class Project:
     today: date
     activities: pd.DataFrame          # una fila por camión × actividad
     trucks: pd.DataFrame              # una fila por camión
-    tasks: pd.DataFrame               # estado actual de cada tarea SOP por camión
+    tasks: pd.DataFrame               # estado de las tareas registradas con el sistema anterior
     task_log: pd.DataFrame            # todas las actualizaciones registradas
     delays: pd.DataFrame              # notas de atraso de los supervisores
     comments: pd.DataFrame            # comentarios por actividad
@@ -136,11 +137,11 @@ def _new_row(truck: str, act: str, start: str = "", end: str = "") -> dict:
 
 def _apply_scope(ev: dict, rows: dict, task_sel: dict, custom: dict) -> None:
     """Cambios de alcance del administrador:
-    - new_activity: crea una actividad general (sin SOP) y la agrega a `trucks`.
-    - add_activity: agrega una actividad existente a un camión (con las tareas SOP elegidas).
+    - new_activity: crea una actividad general y la agrega a `trucks`.
+    - add_activity: agrega una actividad existente a un camión.
     - remove_activity: quita una actividad de un camión (su historial se conserva).
-    - set_tasks: cambia las tareas SOP incluidas en una actividad de un camión.
-    - add_truck: agrega un camión nuevo con sus actividades y tareas SOP.
+    - set_tasks: (eventos anteriores) tareas incluidas en una actividad de un camión.
+    - add_truck: agrega un camión nuevo con sus actividades.
     - remove_truck: quita el camión del plan (su historial se conserva)."""
     op, truck = ev.get("op"), ev.get("truck", "")
 
@@ -149,11 +150,11 @@ def _apply_scope(ev: dict, rows: dict, task_sel: dict, custom: dict) -> None:
             return
         rows[(truck, act)] = _new_row(truck, act, start, end)
         task_sel.pop((truck, act), None)
-        if tasks is not None and config.activity(act).sops:
+        if tasks is not None and act in config.LEGACY_TASK_PREFIXES:
             task_sel[(truck, act)] = list(tasks)
 
     if op == "new_activity" and ev.get("act") and ev.get("name"):
-        custom[ev["act"]] = config.Activity(ev["act"], ev["name"], (), bool(ev.get("external")), name=ev["name"])
+        custom[ev["act"]] = config.Activity(ev["act"], ev["name"], bool(ev.get("external")), name=ev["name"])
         for tr in ev.get("trucks", []):
             add(tr, ev["act"], None, ev.get("start", ""), ev.get("end", ""))
     elif op == "add_activity":
@@ -189,7 +190,7 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
     rows: dict[tuple[str, str], dict] = {}
     for r in base.to_dict("records"):
         rows[(r["truck"], r["act_key"])] = {**r, "fc_start": r["base_start"], "fc_end": r["base_end"]}
-    task_sel: dict[tuple[str, str], list[str]] = {}  # tareas SOP incluidas (sin entrada = todas)
+    task_sel: dict[tuple[str, str], list[str]] = {}  # tareas incluidas, sistema anterior (sin entrada = todas)
     custom: dict[str, config.Activity] = {}
     weekend: dict[str, dict] = {}
     plan_rows = []
@@ -235,11 +236,12 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
     task_log = pd.DataFrame(log_rows, columns=log_cols) if log_rows else pd.DataFrame(columns=log_cols)
     latest = task_log.drop_duplicates(["truck", "act_key", "task_id"], keep="last")
 
-    # Estado de cada tarea SOP en cada camión
+    # Estado de las tareas registradas con el sistema anterior (solo se usan
+    # para conservar el avance cargado antes del registro en %)
     cat = load_catalog()
     task_frames = []
     for (truck, act_key) in idx:
-        sops = config.activity(act_key).sops
+        sops = config.LEGACY_TASK_PREFIXES.get(act_key, ())
         if not sops:
             continue
         t = cat[cat.sop.isin(sops)].copy()
@@ -265,33 +267,27 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
     progress, has_records, mh = [], [], []
     for _, a in acts.iterrows():
         key = (a.truck, a.act_key)
-        if config.activity(a.act_key).sops:
+        if key in act_manual.index:
+            row = act_manual.loc[key]
+            p = (_f(row.progress) or 0.0) / 100
+            has_records.append(True)
+            mh.append(_f(row.actual_mh) or 0.0)
+        elif key in has_task_rec:
             t = tasks[(tasks.truck == a.truck) & (tasks.act_key == a.act_key)]
             applicable = t[t.status != "na"]
-            if key in has_task_rec:
-                p = (applicable.status == "done").sum() / len(applicable) if len(applicable) else 1.0
-                has_records.append(True)
-            else:
-                p = _f(a.imported_progress) or 0.0
-                has_records.append(False)
+            p = (applicable.status == "done").sum() / len(applicable) if len(applicable) else 1.0
+            has_records.append(True)
             mh.append(float(t.actual_mh.sum(skipna=True)))
         else:
-            if key in act_manual.index:
-                row = act_manual.loc[key]
-                p = (_f(row.progress) or 0.0) / 100
-                has_records.append(True)
-                mh.append(_f(row.actual_mh) or 0.0)
-            else:
-                p = _f(a.imported_progress) or 0.0
-                has_records.append(False)
-                mh.append(0.0)
+            p = _f(a.imported_progress) or 0.0
+            has_records.append(False)
+            mh.append(0.0)
         progress.append(min(max(p, 0.0), 1.0))
     acts["progress"] = progress
     acts["has_records"] = has_records
     acts["actual_mh"] = mh
     acts["order"] = acts.act_key.map(config.activity_order)
     acts["external"] = acts.act_key.map(lambda k: config.activity(k).external)
-    acts["has_sop"] = acts.act_key.map(lambda k: bool(config.activity(k).sops))
     for col in ("base_start", "base_end", "fc_start", "fc_end"):
         acts[col] = acts[col].map(_d)
     acts["status"] = [

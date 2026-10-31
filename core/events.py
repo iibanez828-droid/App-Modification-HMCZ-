@@ -11,7 +11,7 @@ leyendo los eventos en orden.
 
 Tipos: task (avance de tareas), delay (notas de atraso), plan (fechas del
 pronóstico y días de fin de semana), ack (alerta de trunnion atendida),
-settings (configuración general), scope (camiones, actividades y tareas SOP
+settings (configuración general), scope (camiones y actividades
 que el administrador agrega o quita del plan).
 """
 

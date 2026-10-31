@@ -122,7 +122,7 @@ def sidebar_logo() -> None:
 
 def header(title: str, subtitle: str) -> None:
     b64 = image_b64(config.TRUCK_IMAGE_PATH)
-    img = f'<img src="data:image/webp;base64,{b64}" alt="EH5000"/>' if b64 else ""
+    img = f'<img src="data:image/webp;base64,{b64}" alt="EH4000AC-3"/>' if b64 else ""
     st.markdown(
         f'<div class="lc-header"><div><div class="lc-header-title">{title}</div>'
         f'<div class="lc-header-subtitle">{subtitle}</div></div>{img}</div>',

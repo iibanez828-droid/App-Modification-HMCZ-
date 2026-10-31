@@ -71,7 +71,7 @@ def _print(users: dict[str, User]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Gestión de usuarios HMCZ", formatter_class=argparse.RawDescriptionHelpFormatter,
+    parser = argparse.ArgumentParser(description="Gestión de usuarios HCMZ", formatter_class=argparse.RawDescriptionHelpFormatter,
                                      epilog=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list")

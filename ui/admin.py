@@ -1,5 +1,5 @@
 """Vista del administrador: resumen, alertas, Gantt, plan (fechas), detalle por
-camión (avance, alta de camiones, actividades y tareas SOP), atrasos, reportes
+camión (avance, alta de camiones y actividades), atrasos, reportes
 y configuración del proyecto. Los usuarios no se
 gestionan desde la app (ver scripts/users.py)."""
 
@@ -12,7 +12,6 @@ import pandas as pd
 import streamlit as st
 
 from core import config
-from core.catalog import tasks_for
 from core.events import write_event
 from core.executive_report import build_executive_pdf
 from core.reports import build_excel, status_csv
@@ -396,27 +395,6 @@ def _save_scope(ctx: Ctx, payload: dict, subject: str, nonce_key: str) -> None:
         st.rerun()
 
 
-def _task_picker(ctx: Ctx, act_key: str, key: str, selected: list[str] | None = None) -> list[str]:
-    """Tabla de tareas SOP con una casilla para incluir/excluir cada una."""
-    t, lang = ctx.t, ctx.lang
-    cat = tasks_for(act_key)
-    chosen = set(cat.task_id) if selected is None else set(selected)
-    df = pd.DataFrame({
-        "include": cat.task_id.isin(chosen), "task_id": cat.task_id, "stage": cat.stage,
-        "task": cat.desc_jp.where((lang == "ja") & (cat.desc_jp != ""), cat.desc_en),
-    })
-    out = st.data_editor(df, key=key, hide_index=True, width="stretch", height=min(38 + 35 * len(df), 420),
-                         disabled=["task_id", "stage", "task"], column_config={
-                             "include": st.column_config.CheckboxColumn(t("include"), width=80),
-                             "task_id": st.column_config.TextColumn(t("col_task_id"), width=80),
-                             "stage": st.column_config.TextColumn(t("col_stage"), width=110),
-                             "task": st.column_config.TextColumn(t("col_task")),
-                         })
-    picked = out[out.include].task_id.tolist()
-    st.caption(t("tasks_selected", n=len(picked), total=len(df)))
-    return picked
-
-
 def _new_activity_key(name: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:24] or "act"
     key, n = f"cx_{slug}", 2
@@ -433,16 +411,14 @@ def _manage_activities(ctx: Ctx, truck: str, acts: pd.DataFrame) -> None:
     t, p = ctx.t, ctx.project
     nonce = _nonce(truck)
     section(t("manage_activities"))
-    tab_add, tab_tasks, tab_remove = st.tabs([":material/add: " + t("add_activity"),
-                                              ":material/checklist: " + t("edit_sop_tasks"),
-                                              ":material/delete: " + t("remove_activity")])
+    tab_add, tab_remove = st.tabs([":material/add: " + t("add_activity"), ":material/delete: " + t("remove_activity")])
 
     # ── Agregar: actividad general nueva o una actividad que este camión no tiene
     with tab_add:
         missing = [a.key for a in config.all_activities() if a.key not in set(acts.act_key)]
         mode = st.segmented_control(t("add_mode"), ["new", "existing"], default="new", key=f"add_mode_{truck}_{nonce}",
                                     format_func=lambda m: t("add_mode_" + m)) or "new"
-        act, tasks = None, None
+        act = None
         if mode == "new":
             note(t("new_activity_help"))
             c1, c2 = st.columns([3, 1], vertical_alignment="bottom")
@@ -455,8 +431,6 @@ def _manage_activities(ctx: Ctx, truck: str, acts: pd.DataFrame) -> None:
             note(t("no_missing_activities"))
         else:
             act = st.selectbox(t("activity"), missing, key=f"add_act_{truck}_{nonce}", format_func=lambda k: act_name(t, k))
-            if config.activity(act).sops:
-                tasks = _task_picker(ctx, act, f"add_tasks_{truck}_{act}_{nonce}")
         if mode == "new" or act:
             c1, c2, _ = st.columns([1, 1, 2])
             start = c1.date_input(t("fc_start"), value=None, key=f"add_start_{truck}_{nonce}", format="DD/MM/YYYY")
@@ -477,28 +451,9 @@ def _manage_activities(ctx: Ctx, truck: str, acts: pd.DataFrame) -> None:
                         _save_scope(ctx, {"op": "new_activity", "act": _new_activity_key(name), "name": name.strip(),
                                           "external": external, "trucks": targets, "start": _iso(start),
                                           "end": _iso(end)}, truck, truck)
-                elif tasks is not None and not tasks:
-                    st.error(t("err_no_tasks"))
                 else:
-                    _save_scope(ctx, {"op": "add_activity", "truck": truck, "act": act, "tasks": tasks,
+                    _save_scope(ctx, {"op": "add_activity", "truck": truck, "act": act,
                                       "start": _iso(start), "end": _iso(end)}, truck, truck)
-
-    # ── Subtareas SOP incluidas en cada actividad con SOP
-    with tab_tasks:
-        sop_acts = acts[acts.has_sop].act_key.tolist()
-        if not sop_acts:
-            note(t("no_sop_activities"))
-        else:
-            note(t("edit_sop_tasks_help"))
-            act = st.selectbox(t("activity"), sop_acts, key=f"sop_act_{truck}_{nonce}", format_func=lambda k: act_name(t, k))
-            current = p.tasks[(p.tasks.truck == truck) & (p.tasks.act_key == act)].task_id.tolist()
-            picked = _task_picker(ctx, act, f"sop_tasks_{truck}_{act}_{nonce}", current)
-            if st.button(t("save_sop_tasks"), type="primary", icon=":material/save:", key=f"sop_btn_{truck}_{nonce}",
-                         disabled=set(picked) == set(current)):
-                if not picked:
-                    st.error(t("err_no_tasks"))
-                else:
-                    _save_scope(ctx, {"op": "set_tasks", "truck": truck, "act": act, "tasks": picked}, truck, truck)
 
     # ── Quitar una actividad del camión
     with tab_remove:
@@ -536,11 +491,6 @@ def _add_truck(ctx: Ctx) -> None:
         keys = st.multiselect(t("activities"), [a.key for a in config.all_activities()],
                               default=[a.key for a in config.ACTIVITIES], key=f"nt_acts_{nonce}",
                               format_func=lambda k: act_name(t, k))
-        tasks: dict[str, list[str]] = {}
-        for k in keys:
-            if config.activity(k).sops:
-                st.markdown(f"**{act_name(t, k)}** · {t('sop_tasks_included')}")
-                tasks[k] = _task_picker(ctx, k, f"nt_tasks_{k}_{nonce}")
         if st.button(t("add_truck"), type="primary", icon=":material/local_shipping:", key=f"nt_btn_{nonce}"):
             if not re.fullmatch(r"[A-Z0-9-]{2,12}", truck):
                 st.error(t("err_truck_id"))
@@ -548,10 +498,8 @@ def _add_truck(ctx: Ctx) -> None:
                 st.error(t("err_truck_exists", truck=truck))
             elif not keys:
                 st.error(t("err_no_activities"))
-            elif any(not v for v in tasks.values()):
-                st.error(t("err_no_tasks"))
             else:
-                acts = [{"act": k, "tasks": tasks.get(k)} for k in keys]
+                acts = [{"act": k} for k in keys]
                 _save_scope(ctx, {"op": "add_truck", "truck": truck, "acts": acts}, truck, "_new_truck_")
 
 
@@ -643,7 +591,7 @@ def _reports(ctx: Ctx) -> None:
     section(t("executive_report"))
     note(t("executive_help"))
     c1, c2, _ = st.columns(3)
-    c1.download_button(t("download_pdf"), rep["pdf"], file_name=f"HMCZ_executive_report_{rep['stamp']}.pdf",
+    c1.download_button(t("download_pdf"), rep["pdf"], file_name=f"HCMZ_executive_report_{rep['stamp']}.pdf",
                        mime="application/pdf", icon=":material/picture_as_pdf:", type="primary", width="stretch")
     if c2.button(t("publish_report"), icon=":material/cloud_upload:", width="stretch", help=t("publish_help")):
         def publish() -> None:
@@ -655,10 +603,10 @@ def _reports(ctx: Ctx) -> None:
     section(t("data_export"))
     note(t("reports_help"))
     c1, c2, _ = st.columns(3)
-    c1.download_button(t("download_excel"), rep["xlsx"], file_name=f"HMCZ_status_{rep['stamp']}.xlsx",
+    c1.download_button(t("download_excel"), rep["xlsx"], file_name=f"HCMZ_status_{rep['stamp']}.xlsx",
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                        icon=":material/download:", width="stretch")
-    c2.download_button(t("download_csv"), rep["csv"], file_name=f"HMCZ_status_{rep['stamp']}.csv", mime="text/csv",
+    c2.download_button(t("download_csv"), rep["csv"], file_name=f"HCMZ_status_{rep['stamp']}.csv", mime="text/csv",
                        icon=":material/table:", width="stretch")
 
 

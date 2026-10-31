@@ -1,4 +1,4 @@
-"""HMCZ Truck Modification — seguimiento de la modificación de 12 camiones EH5000.
+"""EH4000AC-3 Project HCMZ — seguimiento de la modificación de 12 camiones EH4000AC-3.
 
 Ejecutar con:  streamlit run app.py
 """
@@ -20,7 +20,7 @@ from ui.common import Ctx, note, password_form, show_flash
 from ui.gantt import gantt_panels
 from ui.theme import footer, header, inject_css, sidebar_logo
 
-st.set_page_config(page_title="HMCZ Truck Modification", page_icon=str(config.LOGO_PATH), layout="wide",
+st.set_page_config(page_title=config.PROJECT_NAME, page_icon=str(config.LOGO_PATH), layout="wide",
                    initial_sidebar_state="expanded")
 inject_css()
 ss = st.session_state

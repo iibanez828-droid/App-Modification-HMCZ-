@@ -54,15 +54,29 @@ def test_baseline_has_12_trucks(store):
 
 
 # ─── Avance ───────────────────────────────────────────────────────────────
-def test_sop_progress_excludes_na(store):
-    updates = [{"task_id": "NC-001", "status": "done"}] + [
+def test_legacy_task_progress_is_kept(store):
+    # Registros por tareas guardados antes del registro en %: el avance se conserva
+    updates = [{"task_id": "NC-001", "status": "done", "actual_mh": 2}] + [
         {"task_id": f"NC-00{i}", "status": "na"} for i in range(5, 10)
     ]
     write_event(store, "task", {"truck": "RD224", "act": "nose_cone", "updates": updates}, "sup")
     p = build_project(store.snapshot(), today=TODAY)
     act = p.activities.set_index(["truck", "act_key"]).loc[("RD224", "nose_cone")]
     assert act.progress == pytest.approx(1 / 12)  # 17 tareas − 5 N/A = 12 aplicables
-    assert act.has_records
+    assert act.has_records and act.actual_mh == pytest.approx(2)
+
+
+def test_every_activity_uses_percent_progress(store):
+    write_event(store, "task", {"truck": "RD224", "act": "nose_cone",
+                                "updates": [{"task_id": "NC-001", "status": "done", "actual_mh": 2}]}, "sup")
+    for act in ("nose_cone", "high_arch"):
+        write_event(store, "task", {"truck": "RD224", "act": act,
+                                    "updates": [{"task_id": config.ACTIVITY_TASK_ID, "progress": 60, "actual_mh": 4}]}, "sup")
+    p = build_project(store.snapshot(), today=TODAY)
+    acts = p.activities.set_index(["truck", "act_key"])
+    for act in ("nose_cone", "high_arch"):  # el registro en % reemplaza al avance anterior por tareas
+        assert acts.loc[("RD224", act)].progress == pytest.approx(0.6)
+        assert acts.loc[("RD224", act)].actual_mh == pytest.approx(4)
 
 
 def test_lhs_activity_uses_two_sops(store):
@@ -129,7 +143,7 @@ def test_corrupt_event_is_ignored(store):
 
 
 
-# ─── Alcance: camiones, actividades y tareas SOP ──────────────────────────
+# ─── Alcance: camiones, actividades y tareas ──────────────────────────────
 def test_scope_add_remove_activities_and_tasks(store):
     write_event(store, "scope", {"op": "new_activity", "act": "cx_cleaning", "name": "Cleaning", "external": False,
                                  "trucks": ["RD224", "RD225"], "start": "2026-11-20", "end": "2026-11-20"}, "admin")
@@ -194,7 +208,7 @@ def test_master_account():
 # ─── Textos ───────────────────────────────────────────────────────────────
 def test_every_dynamic_key_is_translated():
     keys = [f"act_{a.key}" for a in config.ACTIVITIES]
-    keys += [f"ts_{s}" for s in config.TASK_STATUSES] + [f"qc_{s}" for s in config.QC_RESULTS]
+    keys += [f"ts_{s}" for s in config.TASK_STATUSES]
     keys += [f"dc_{c}" for c in config.DELAY_CATEGORIES] + [f"role_{r}" for r in config.ROLES]
     keys += [f"st_{s}" for s in config.STATUS_COLORS] + ["st_not_started"]
     missing = [k for k in keys if k not in TEXTS]

@@ -1,4 +1,6 @@
-"""Catálogo de tareas de los SOP (generado por seed/build_seed.py)."""
+"""Catálogo de tareas del sistema anterior (generado por seed/build_seed.py).
+
+Solo se usa para conservar el avance registrado por tareas antes del registro en %."""
 
 from __future__ import annotations
 
@@ -18,15 +20,3 @@ def load_catalog() -> pd.DataFrame:
     df["conditional"] = df["conditional"].astype(str).str.lower().eq("true")
     return df
 
-
-@lru_cache(maxsize=1)
-def load_notes() -> pd.DataFrame:
-    return pd.read_csv(config.SOP_NOTES, dtype=str).fillna("")
-
-
-def tasks_for(act_key: str) -> pd.DataFrame:
-    """Tareas de una actividad, en el orden de sus SOP."""
-    sops = config.activity(act_key).sops
-    cat = load_catalog()
-    parts = [cat[cat.sop == s].sort_values("seq") for s in sops]
-    return pd.concat(parts, ignore_index=True) if parts else cat.iloc[0:0]

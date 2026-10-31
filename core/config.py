@@ -1,6 +1,6 @@
-"""Constantes del proyecto HMCZ Truck Modification.
+"""Constantes del proyecto EH4000AC-3 Project HCMZ.
 
-Todo lo que define el proyecto (actividades, SOP, colores, valores por defecto)
+Todo lo que define el proyecto (actividades, colores, valores por defecto)
 vive aquí para que cambiarlo sea editar un solo archivo.
 """
 
@@ -15,8 +15,8 @@ SEED = ROOT / "seed"
 LOGO_PATH = ASSETS / "landcros_logo.webp"
 TRUCK_IMAGE_PATH = ASSETS / "eh5000.webp"
 
-PROJECT_NAME = "HMCZ Truck Modification"
-FLEET = "EH5000"
+PROJECT_NAME = "EH4000AC-3 Project HCMZ"
+FLEET = "EH4000AC-3"
 
 
 # ─── Actividades ──────────────────────────────────────────────────────────
@@ -24,26 +24,25 @@ FLEET = "EH5000"
 class Activity:
     key: str            # identificador interno estable
     gantt_name: str     # nombre tal como aparece en el Gantt
-    sops: tuple[str, ...]  # prefijos de Task ID de los SOP asociados (vacío = sin SOP)
     external: bool = False  # lo ejecuta un contratista externo
     name: str = ""          # nombre visible de las actividades creadas en la app (las fijas usan i18n)
 
 
 ACTIVITIES: tuple[Activity, ...] = (
-    Activity("trailing_lower", "Trailing arm lowering", ()),
-    Activity("trunnion_cap", "Trunnion cap machining", (), external=True),
-    Activity("trunnion_mod", "Trunnion modification", (), external=True),
-    Activity("trailing_assy", "Trailing arm assembly", ()),
-    Activity("high_arch", "High arch reinforcement", ("HA",)),
-    Activity("nose_cone", "Nose cone update", ("NC",)),
-    Activity("rhs_seat", "RHS seat screw update", ("MF",)),
-    Activity("lhs_seat", "LHS seat screw update", ("LS", "LHS")),
+    Activity("trailing_lower", "Trailing arm lowering"),
+    Activity("trunnion_cap", "Trunnion cap machining", external=True),
+    Activity("trunnion_mod", "Trunnion modification", external=True),
+    Activity("trailing_assy", "Trailing arm assembly"),
+    Activity("high_arch", "High arch reinforcement"),
+    Activity("nose_cone", "Nose cone update"),
+    Activity("rhs_seat", "RHS seat screw update"),
+    Activity("lhs_seat", "LHS seat screw update"),
 )
 ACTIVITY_BY_KEY = {a.key: a for a in ACTIVITIES}
 ACTIVITY_ORDER = {a.key: n for n, a in enumerate(ACTIVITIES)}
 EXTERNAL_KEYS = tuple(a.key for a in ACTIVITIES if a.external)
 
-# Actividades generales (sin SOP) que el administrador crea desde la app. Se
+# Actividades generales que el administrador crea desde la app. Se
 # leen de los eventos al calcular el proyecto (ver core/project.py).
 CUSTOM_ACTIVITIES: dict[str, Activity] = {}
 
@@ -55,7 +54,7 @@ def set_custom_activities(acts: dict[str, Activity]) -> None:
 
 def activity(key: str) -> Activity:
     """Actividad fija o creada en la app; una clave desconocida no rompe la vista."""
-    return ACTIVITY_BY_KEY.get(key) or CUSTOM_ACTIVITIES.get(key) or Activity(key, key, (), name=key)
+    return ACTIVITY_BY_KEY.get(key) or CUSTOM_ACTIVITIES.get(key) or Activity(key, key, name=key)
 
 
 def all_activities() -> list[Activity]:
@@ -68,20 +67,24 @@ def activity_order(key: str) -> int:
     custom = list(CUSTOM_ACTIVITIES)
     return len(ACTIVITIES) + (custom.index(key) if key in custom else len(custom))
 
-# SOP: prefijo de Task ID → archivo de origen en seed/
+# Todas las actividades registran su avance en % (0–100). Antes, algunas
+# actividades se registraban por tareas de SOP; esos registros anteriores se
+# siguen leyendo para conservar el avance y las horas-hombre ya cargadas
+# (actividad → prefijos de Task ID del catálogo).
+LEGACY_TASK_PREFIXES = {
+    "high_arch": ("HA",),
+    "nose_cone": ("NC",),
+    "rhs_seat": ("MF",),
+    "lhs_seat": ("LS", "LHS"),
+}
+
+# Archivos de origen del catálogo de tareas (solo para seed/build_seed.py)
 SOP_FILES = {
     "HA": "23 & 24. High_Arch_Crack_R5_Additional_Welding_Field_Task_Route_EN_JP.xlsx",
     "NC": "4. Nose_Cone_Bracket_Field_Task_Route.xlsx",
     "MF": "18. Main_Frame_Bottom_Plate_RHS_Field_Task_Route_EN_JP.xlsx",
     "LS": "16. LHS_Upright_Seat_Screw_Field_Task_Route_EN_JP.xlsx",
     "LHS": "19. Main_Frame_Bottom_Plate_LHS_Field_Task_Route_EN_JP.xlsx",
-}
-SOP_TITLES = {
-    "HA": "SOP 23 & 24 · High Arch Crack R5 Additional Welding",
-    "NC": "SOP 4 · Nose Cone Bracket",
-    "MF": "SOP 18 · Main Frame Bottom Plate RHS",
-    "LS": "SOP 16 · LHS Upright Seat Screw",
-    "LHS": "SOP 19 · Main Frame Bottom Plate LHS",
 }
 GANTT_FILE = "Schedule HMCZ Truck modification.xlsx"
 ACTIVITIES_SEED = SEED / "activities_seed.csv"
@@ -90,8 +93,7 @@ SOP_NOTES = SEED / "sop_notes.csv"
 
 # ─── Estados ──────────────────────────────────────────────────────────────
 TASK_STATUSES = ("not_started", "in_progress", "done", "na")
-QC_RESULTS = ("pending", "accepted", "rejected")
-ACTIVITY_TASK_ID = "_ACTIVITY_"  # registro de avance manual de actividades sin SOP
+ACTIVITY_TASK_ID = "_ACTIVITY_"  # registro de avance en % de una actividad
 
 DELAY_CATEGORIES = (
     "materials", "manpower", "equipment", "external", "qc", "engineering",
