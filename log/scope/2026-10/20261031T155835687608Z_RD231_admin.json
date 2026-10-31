@@ -1,0 +1,14 @@
+{
+ "kind": "scope",
+ "ts": "2026-10-31T15:58:35.687608+00:00",
+ "user": "admin",
+ "op": "new_activity",
+ "act": "cx_test",
+ "name": "test",
+ "external": false,
+ "trucks": [
+  "RD231"
+ ],
+ "start": "",
+ "end": ""
+}
