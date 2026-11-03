@@ -1,0 +1,12 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-03T11:26:42.641859+00:00",
+ "user": "admin",
+ "truck": "RD226",
+ "changes": [],
+ "reason": "Trucks has not arrive to work shop due to delays with the line bore tools",
+ "weekend": {
+  "sat": true,
+  "sun": true
+ }
+}
