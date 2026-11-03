@@ -1,0 +1,33 @@
+{
+ "kind": "scope",
+ "ts": "2026-11-03T11:35:15.969429+00:00",
+ "user": "admin",
+ "op": "add_truck",
+ "truck": "RD226",
+ "acts": [
+  {
+   "act": "trailing_lower"
+  },
+  {
+   "act": "trunnion_cap"
+  },
+  {
+   "act": "trunnion_mod"
+  },
+  {
+   "act": "trailing_assy"
+  },
+  {
+   "act": "high_arch"
+  },
+  {
+   "act": "nose_cone"
+  },
+  {
+   "act": "rhs_seat"
+  },
+  {
+   "act": "lhs_seat"
+  }
+ ]
+}
