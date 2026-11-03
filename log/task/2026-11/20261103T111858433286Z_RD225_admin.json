@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-03T11:18:58.433286+00:00",
+ "user": "admin",
+ "truck": "RD225",
+ "act": "trailing_lower",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 0.0,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-10-26",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": "Trunnion caps still mounted with line bore tools"
+}
