@@ -1,0 +1,65 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-03T11:55:13.890330+00:00",
+ "user": "admin",
+ "truck": "RD226",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "fc_start": "2026-11-11",
+   "fc_end": "2026-11-11",
+   "base_start": "2026-11-12",
+   "base_end": "2026-11-12"
+  },
+  {
+   "act": "trunnion_cap",
+   "fc_start": "2026-11-12",
+   "fc_end": "2026-11-12",
+   "base_start": "2026-11-12",
+   "base_end": "2026-11-12"
+  },
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-11-13",
+   "fc_end": "2026-11-16",
+   "base_start": "2026-11-13",
+   "base_end": "2026-11-16"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-11-17",
+   "fc_end": "2026-11-17",
+   "base_start": "2026-11-17",
+   "base_end": "2026-11-17"
+  },
+  {
+   "act": "high_arch",
+   "fc_start": "2026-11-15",
+   "fc_end": "2026-11-15",
+   "base_start": "2026-11-15",
+   "base_end": "2026-11-15"
+  },
+  {
+   "act": "nose_cone",
+   "fc_start": "2026-11-17",
+   "fc_end": "2026-11-17",
+   "base_start": "2026-11-17",
+   "base_end": "2026-11-17"
+  },
+  {
+   "act": "rhs_seat",
+   "fc_start": "2026-11-17",
+   "fc_end": "2026-11-17",
+   "base_start": "2026-11-17",
+   "base_end": "2026-11-17"
+  },
+  {
+   "act": "lhs_seat",
+   "fc_start": "2026-11-18",
+   "fc_end": "2026-11-20",
+   "base_start": "2026-11-18",
+   "base_end": "2026-11-20"
+  }
+ ],
+ "reason": "truck has been delayed by issues with the line bore tool"
+}
