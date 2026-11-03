@@ -1,0 +1,44 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-03T12:12:18.953067+00:00",
+ "user": "admin",
+ "truck": "RD229",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "fc_start": "2026-11-04",
+   "fc_end": "2026-11-04"
+  },
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-11-08",
+   "fc_end": "2026-11-11"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-11-16",
+   "fc_end": "2026-11-16"
+  },
+  {
+   "act": "high_arch",
+   "fc_start": "2026-11-07",
+   "fc_end": "2026-11-09"
+  },
+  {
+   "act": "nose_cone",
+   "fc_start": "2026-11-10",
+   "fc_end": "2026-11-12"
+  },
+  {
+   "act": "rhs_seat",
+   "fc_start": "2026-11-14",
+   "fc_end": "2026-11-14"
+  },
+  {
+   "act": "lhs_seat",
+   "fc_start": "2026-11-14",
+   "fc_end": "2026-11-14"
+  }
+ ],
+ "reason": "Schedule swap with RD226: RD229 moved 30 calendar days earlier (-30 d)"
+}
