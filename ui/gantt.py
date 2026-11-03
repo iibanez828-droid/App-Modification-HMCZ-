@@ -13,7 +13,7 @@ import streamlit as st
 
 from core import config
 from core.project import Project
-from ui.common import T, act_name, fmt_date, fmt_pct, note, section
+from ui.common import T, act_name, esc, fmt_date, fmt_pct, fmt_ts, note, section
 
 DAY_MS = 86_400_000
 ACT_COLORS = {
@@ -22,8 +22,10 @@ ACT_COLORS = {
 }
 
 
-def gantt_panels(p: Project, t: T, trucks: list[str], mode: str, show_baseline: bool, key: str) -> None:
-    """Gantt de la flota y, aparte, el Gantt Operating Machine (camiones agregados en la app)."""
+def gantt_panels(p: Project, t: T, trucks: list[str], mode: str, show_baseline: bool, key: str,
+                 stamp: bool = False) -> None:
+    """Gantt de la flota y, aparte, el Gantt Operating Machine (camiones agregados en la app).
+    stamp: muestra abajo a la derecha de cada Gantt la fecha-hora del último registro de avance."""
     build = truck_gantt_figure if mode == "truck" else gantt_figure
     for group in ("fleet", "operating"):
         section(t(f"gantt_{group}_title"))
@@ -34,7 +36,17 @@ def gantt_panels(p: Project, t: T, trucks: list[str], mode: str, show_baseline: 
             continue
         st.plotly_chart(build(p, t, selected, show_baseline), width="stretch", key=f"{key}_{group}",
                         config={"displaylogo": False, "modeBarButtonsToRemove": ["select2d", "lasso2d"]})
+        if stamp:
+            _progress_stamp(p, t, selected)
     st.caption(t("gantt_help"))
+
+
+def _progress_stamp(p: Project, t: T, trucks: list[str]) -> None:
+    ts = p.last_progress(trucks)
+    tz = p.settings.get("timezone", "UTC")
+    when = f"{fmt_ts(ts, tz)} ({tz})" if ts else "—"
+    st.markdown(f'<div style="text-align:right;color:#A5A5A5;font-size:0.8rem;margin-top:-0.6rem">'
+                f'{esc(t("last_progress", ts=when))}</div>', unsafe_allow_html=True)
 
 
 def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True) -> go.Figure:

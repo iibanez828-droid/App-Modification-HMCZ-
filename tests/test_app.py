@@ -170,6 +170,20 @@ def test_executive_pdf(tmp_path):
     assert data.startswith(b"%PDF") and len(data) > 10_000
 
 
+@pytest.mark.parametrize("by_activity,show_baseline", [(False, True), (True, True), (True, False)])
+def test_gantt_pdf(tmp_path, by_activity, show_baseline):
+    from datetime import date
+    from core.events import initialize
+    from core.gantt_report import build_gantt_pdf
+    from core.project import build_project
+    from storage.local_store import LocalStore
+
+    s = LocalStore(tmp_path / "d")
+    initialize(s, "x")
+    data = build_gantt_pdf(build_project(s.snapshot(), today=date(2026, 10, 25)), by_activity, show_baseline)
+    assert data.startswith(b"%PDF") and len(data) > 10_000
+
+
 def test_admin_truck_gantt_and_no_user_management(at):
     _setup_admin(at)
     assert at.session_state["g_mode"] == "truck"

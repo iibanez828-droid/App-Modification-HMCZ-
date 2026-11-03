@@ -101,6 +101,19 @@ def test_latest_record_wins_and_manual_progress(store):
     assert p.truck_row("RD224").actual_mh == pytest.approx(8)
 
 
+def test_last_progress_per_truck_group(store):
+    assert build_project(store.snapshot(), today=TODAY).last_progress(["RD224"]) is None
+    first = write_event(store, "task", {"truck": "RD224", "act": "trailing_lower",
+                                        "updates": [{"task_id": config.ACTIVITY_TASK_ID, "progress": 10}]}, "a")
+    last = write_event(store, "task", {"truck": "RD225", "act": "trailing_lower",
+                                       "updates": [{"task_id": config.ACTIVITY_TASK_ID, "progress": 20}]}, "a")
+    write_event(store, "plan", {"truck": "RD224", "changes": [], "reason": "x"}, "a")  # un cambio de plan no cuenta
+    p = build_project(store.snapshot(), today=TODAY)
+    assert p.last_progress(["RD224"]) == first["ts"]
+    assert p.last_progress(["RD224", "RD225"]) == last["ts"]
+    assert p.last_progress(["RD220"]) is None
+
+
 def test_imported_progress_until_first_record(store):
     p = build_project(store.snapshot(), today=TODAY)
     assert p.truck_row("RD220").status == "completed"

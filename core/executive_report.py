@@ -38,53 +38,57 @@ def _txt(text: object) -> str:
 
 
 class _Report(FPDF):
-    def __init__(self, today: date) -> None:
-        super().__init__(orientation="P", unit="mm", format="A4")
+    """Hoja con membrete LANDCROS. Vertical para el reporte ejecutivo; horizontal ("L") para el Gantt."""
+
+    def __init__(self, today: date, title: str = "EXECUTIVE PROGRESS REPORT", orientation: str = "P") -> None:
+        super().__init__(orientation=orientation, unit="mm", format="A4")
         self.today = today
+        self.heading = title
+        self.content_w = self.w - 2 * MARGIN
         self.set_margins(MARGIN, 36, MARGIN)
         self.set_auto_page_break(True, margin=16)
-        self.set_title(f"{config.PROJECT_NAME} - Executive report {today.isoformat()}")
+        self.set_title(f"{config.PROJECT_NAME} - {title.capitalize()} {today.isoformat()}")
         self.set_author("LANDCROS")
 
     def header(self) -> None:
         self.set_fill_color(*BLACK)
-        self.rect(0, 0, PAGE_W, 26, "F")
+        self.rect(0, 0, self.w, 26, "F")
         self.set_fill_color(*ORANGE)
-        self.rect(0, 26, PAGE_W, 1.6, "F")
+        self.rect(0, 26, self.w, 1.6, "F")
         if config.LOGO_PATH.exists():
             self.image(str(config.LOGO_PATH), x=MARGIN, y=7, h=12)
         self.set_xy(80, 6.5)
         self.set_text_color(*WHITE)
         self.set_font("Helvetica", "B", 15)
-        self.cell(PAGE_W - 80 - MARGIN, 7, "EXECUTIVE PROGRESS REPORT", align="R")
+        self.cell(self.w - 80 - MARGIN, 7, self.heading, align="R")
         self.set_xy(80, 14)
         self.set_font("Helvetica", "", 8.5)
         self.set_text_color(170, 170, 170)
-        self.cell(PAGE_W - 80 - MARGIN, 5, _txt(f"{config.PROJECT_NAME.upper()} - {config.FLEET} FLEET - "
+        self.cell(self.w - 80 - MARGIN, 5, _txt(f"{config.PROJECT_NAME.upper()} - {config.FLEET} FLEET - "
                                                  f"{_fd(self.today).upper()}"), align="R")
         self.set_y(36)
 
     def footer(self) -> None:
         self.set_y(-11)
         self.set_draw_color(*LINE)
-        self.line(MARGIN, self.get_y() - 1, PAGE_W - MARGIN, self.get_y() - 1)
+        self.line(MARGIN, self.get_y() - 1, self.w - MARGIN, self.get_y() - 1)
         self.set_font("Helvetica", "", 7.5)
         self.set_text_color(*GREY)
-        self.cell(CONTENT_W / 2, 5, _txt(f"LANDCROS - {config.PROJECT_NAME}"))
-        self.cell(CONTENT_W / 2, 5, f"Page {self.page_no()}/{{nb}}", align="R")
+        self.cell(self.content_w / 2, 5, _txt(f"LANDCROS - {config.PROJECT_NAME}"))
+        self.cell(self.content_w / 2, 5, f"Page {self.page_no()}/{{nb}}", align="R")
 
     # ── Bloques ─────────────────────────────────────────────────────────
     def section(self, title: str, need: float = 30) -> None:
         """need: alto mínimo (mm) del contenido que sigue, para no dejar el título solo al pie de página."""
-        if self.get_y() + need > 280:
+        if self.get_y() + need > self.h - 17:
             self.add_page()
         self.ln(3)
         self.set_font("Helvetica", "B", 10.5)
         self.set_text_color(*BLACK)
-        self.cell(CONTENT_W, 6, title.upper(), new_x="LMARGIN", new_y="NEXT")
+        self.cell(self.content_w, 6, title.upper(), new_x="LMARGIN", new_y="NEXT")
         self.set_draw_color(*ORANGE)
         self.set_line_width(0.6)
-        self.line(MARGIN, self.get_y(), PAGE_W - MARGIN, self.get_y())
+        self.line(MARGIN, self.get_y(), self.w - MARGIN, self.get_y())
         self.set_line_width(0.2)
         self.ln(3)
 
