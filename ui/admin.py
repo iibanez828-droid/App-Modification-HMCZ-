@@ -206,17 +206,15 @@ def _plan(ctx: Ctx) -> None:
         note(t("no_active_trucks"))
         return
     truck = c1.selectbox(t("truck"), options, key="plan_truck", format_func=lambda x: truck_label(ctx, x))
+    # El administrador puede ajustar las fechas de cualquier camión, también futuros y completados
     row = p.truck_row(truck)
-    editable = row.status in EDITABLE_STATUSES
     truck_badge(ctx, truck)
-    if not editable:
-        note(t("plan_readonly", status=t("st_" + row.status)))
 
     nonce = st.session_state.setdefault(f"plan_nonce_{truck}", 0)
     cal0 = p.calendar(truck)
     c1, c2, _ = st.columns([1, 1, 3])
-    sat = c1.checkbox(t("work_saturday"), value=cal0.saturday, key=f"sat_{truck}_{nonce}", disabled=not editable)
-    sun = c2.checkbox(t("work_sunday"), value=cal0.sunday, key=f"sun_{truck}_{nonce}", disabled=not editable)
+    sat = c1.checkbox(t("work_saturday"), value=cal0.saturday, key=f"sat_{truck}_{nonce}")
+    sun = c2.checkbox(t("work_sunday"), value=cal0.sunday, key=f"sun_{truck}_{nonce}")
     cal = WorkCalendar.build(sat, sun, p.settings.get("holidays", []))
 
     acts = p.truck_activities(truck).reset_index(drop=True)
@@ -231,7 +229,7 @@ def _plan(ctx: Ctx) -> None:
     key = f"plan_ed_{truck}_{nonce}"
     st.data_editor(
         base, key=key, hide_index=True, width="stretch", num_rows="fixed",
-        disabled=["act", "ext", "progress"] + ([] if editable else ["base_start", "base_end", "fc_start", "fc_end", "assigned_to"]),
+        disabled=["act", "ext", "progress"],
         column_config={
             "act": st.column_config.TextColumn(t("activity"), width=200),
             "ext": st.column_config.CheckboxColumn(t("external"), width=70),
@@ -287,41 +285,40 @@ def _plan(ctx: Ctx) -> None:
     for e in errors:
         st.error(e, icon=":material/block:")
 
-    if editable:
-        reason = st.text_input(t("change_reason"), key=f"reason_{truck}_{nonce}", placeholder=t("change_reason_ph"))
-        c1, c2 = st.columns([1, 3], vertical_alignment="center")
-        c2.caption(t("plan_changes", n=len(changes)))
-        if c1.button(t("save_plan"), type="primary", icon=":material/save:", key=f"save_plan_{truck}_{nonce}",
-                     disabled=bool(errors) or not (changes or weekend_changed), width="stretch"):
-            if not reason.strip():
+    reason = st.text_input(t("change_reason"), key=f"reason_{truck}_{nonce}", placeholder=t("change_reason_ph"))
+    c1, c2 = st.columns([1, 3], vertical_alignment="center")
+    c2.caption(t("plan_changes", n=len(changes)))
+    if c1.button(t("save_plan"), type="primary", icon=":material/save:", key=f"save_plan_{truck}_{nonce}",
+                 disabled=bool(errors) or not (changes or weekend_changed), width="stretch"):
+        if not reason.strip():
+            st.error(t("err_reason"))
+        else:
+            payload = {"truck": truck, "changes": changes, "reason": reason.strip()}
+            if weekend_changed:
+                payload["weekend"] = {"sat": sat, "sun": sun}
+            if safe_write(ctx, lambda: write_event(ctx.store, "plan", payload, ctx.user.username, truck), t("plan_saved")):
+                st.session_state[f"plan_nonce_{truck}"] = nonce + 1
+                st.rerun()
+
+    with st.expander(t("shift_title"), icon=":material/fast_forward:"):
+        note(t("shift_help"))
+        c1, c2 = st.columns([1, 3], vertical_alignment="bottom")
+        n = c1.number_input(t("shift_days"), min_value=-30, max_value=30, value=1, step=1, key=f"shift_{truck}")
+        reason2 = c2.text_input(t("change_reason"), key=f"shift_reason_{truck}", placeholder=t("change_reason_ph"))
+        if st.button(t("shift_apply"), key=f"shift_btn_{truck}", disabled=n == 0):
+            if not reason2.strip():
                 st.error(t("err_reason"))
             else:
-                payload = {"truck": truck, "changes": changes, "reason": reason.strip()}
-                if weekend_changed:
-                    payload["weekend"] = {"sat": sat, "sun": sun}
+                shift_changes = []
+                for a in acts.itertuples():
+                    if a.progress >= 1 or not a.fc_start or not a.fc_end:
+                        continue
+                    shift_changes.append({"act": a.act_key, "fc_start": cal0.shift(a.fc_start, int(n)).isoformat(),
+                                          "fc_end": cal0.shift(a.fc_end, int(n)).isoformat()})
+                payload = {"truck": truck, "changes": shift_changes, "reason": f"{reason2.strip()} ({int(n):+d} wd)"}
                 if safe_write(ctx, lambda: write_event(ctx.store, "plan", payload, ctx.user.username, truck), t("plan_saved")):
                     st.session_state[f"plan_nonce_{truck}"] = nonce + 1
                     st.rerun()
-
-        with st.expander(t("shift_title"), icon=":material/fast_forward:"):
-            note(t("shift_help"))
-            c1, c2 = st.columns([1, 3], vertical_alignment="bottom")
-            n = c1.number_input(t("shift_days"), min_value=-30, max_value=30, value=1, step=1, key=f"shift_{truck}")
-            reason2 = c2.text_input(t("change_reason"), key=f"shift_reason_{truck}", placeholder=t("change_reason_ph"))
-            if st.button(t("shift_apply"), key=f"shift_btn_{truck}", disabled=n == 0):
-                if not reason2.strip():
-                    st.error(t("err_reason"))
-                else:
-                    shift_changes = []
-                    for a in acts.itertuples():
-                        if a.progress >= 1 or not a.fc_start or not a.fc_end:
-                            continue
-                        shift_changes.append({"act": a.act_key, "fc_start": cal0.shift(a.fc_start, int(n)).isoformat(),
-                                              "fc_end": cal0.shift(a.fc_end, int(n)).isoformat()})
-                    payload = {"truck": truck, "changes": shift_changes, "reason": f"{reason2.strip()} ({int(n):+d} wd)"}
-                    if safe_write(ctx, lambda: write_event(ctx.store, "plan", payload, ctx.user.username, truck), t("plan_saved")):
-                        st.session_state[f"plan_nonce_{truck}"] = nonce + 1
-                        st.rerun()
 
 
 # ─── 4. Detalle por camión ────────────────────────────────────────────────

@@ -83,6 +83,11 @@ class Project:
     def visible_trucks(self) -> list[str]:
         return self.trucks[self.trucks.status.isin(VISIBLE_STATUSES)].truck.tolist()
 
+    def last_progress(self, trucks: list[str]) -> str | None:
+        """Fecha-hora (UTC, ISO) del último registro de avance de los camiones; None si no hay registros."""
+        ts = self.task_log[self.task_log.truck.isin(trucks)].ts
+        return max(ts, key=pd.Timestamp) if len(ts) else None
+
     def alerts(self) -> list[dict]:
         """Alertas para el administrador, de la más a la menos urgente."""
         out: list[dict] = []

@@ -12,6 +12,7 @@ import streamlit as st
 from core import config
 from core.auth import User, authenticate, load_users, master_account
 from core.events import initialize, is_initialized
+from core.gantt_report import build_gantt_pdf
 from core.i18n import translator
 from core.project import build_project
 from storage import StorageError, local_dir, make_store
@@ -110,11 +111,14 @@ def public_page() -> None:
             note(t("not_initialized"))
             return
         note(t("public_help"))
-        c1, c2 = st.columns([2, 3], vertical_alignment="center")
+        c1, c2, c3 = st.columns([2, 2, 1.4], vertical_alignment="center")
         mode = c1.segmented_control(t("gantt_mode"), ["truck", "activity"], default="truck", key="pub_mode",
                                     format_func=lambda m: t("gantt_by_" + m), label_visibility="collapsed") or "truck"
         show_base = c2.checkbox(t("show_baseline"), value=True, key="pub_base")
-        gantt_panels(project, t, project.trucks.truck.tolist(), mode, show_base, "g_public")
+        c3.download_button(t("download_gantt_pdf"), build_gantt_pdf(project, mode == "activity", show_base),
+                           file_name=f"HCMZ_Gantt_{project.today:%Y%m%d}.pdf", mime="application/pdf",
+                           icon=":material/print:", help=t("download_gantt_help"), on_click="ignore", width="stretch")
+        gantt_panels(project, t, project.trucks.truck.tolist(), mode, show_base, "g_public", stamp=True)
     footer(f"LANDCROS · {config.PROJECT_NAME}", t("public_footer"))
 
 

@@ -219,14 +219,18 @@ TEXTS: dict[str, tuple[str, str]] = {
     "gantt_help": ("Grey bar = original plan · coloured bar = forecast (colour = status, label = progress). "
                    "Zoom by dragging; double-click to reset.",
                    "灰色＝当初計画 · 色付き＝予測（色＝状態、数値＝進捗）。ドラッグで拡大、ダブルクリックで元に戻ります。"),
+    "last_progress": ("Last progress update: {ts}", "最終進捗更新：{ts}"),
+    "download_gantt_pdf": ("Print Gantt (PDF)", "ガントを印刷（PDF）"),
+    "download_gantt_help": ("A4 landscape PDF of the Gantt shown on screen (same view and original plan option). "
+                            "Generated in English.",
+                            "画面に表示中のガント（同じ表示・当初計画の設定）の A4 横向き PDF。英語で作成されます。"),
 
     # ── Plan ──
-    "plan_help": ("Trucks become editable {days} days before their start. The original plan stays fixed; "
-                  "only the forecast changes. Every change is recorded with its reason.",
-                  "車両は開始 {days} 日前から編集可能になります。当初計画は固定され、変更されるのは予測のみです。"
-                  "すべての変更は理由とともに記録されます。"),
-    "plan_show_all": ("Show all trucks (future and completed are read-only)", "全車両を表示（将来・完了は閲覧のみ）"),
-    "plan_readonly": ("Read-only: this truck is «{status}».", "閲覧のみ：この車両は「{status}」です。"),
+    "plan_help": ("The list shows the trucks starting within {days} days; turn on «Show all trucks» to edit any other "
+                  "truck. The original plan stays fixed; only the forecast changes. Every change is recorded with its reason.",
+                  "一覧には {days} 日以内に開始する車両が表示されます。他の車両を編集するには「全車両を表示」をオンにしてください。"
+                  "当初計画は固定され、変更されるのは予測のみです。すべての変更は理由とともに記録されます。"),
+    "plan_show_all": ("Show all trucks (including future and completed)", "全車両を表示（将来・完了を含む）"),
     "work_saturday": ("Work on Saturday", "土曜日稼働"),
     "work_sunday": ("Work on Sunday", "日曜日稼働"),
     "baseline_help": ("The original plan is fixed. It can only be filled in where it is empty.",
