@@ -1,0 +1,49 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-03T11:30:54.300710+00:00",
+ "user": "admin",
+ "truck": "RD226",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "fc_start": "2026-11-15",
+   "fc_end": "2026-11-15"
+  },
+  {
+   "act": "trunnion_cap",
+   "fc_start": "2026-11-15",
+   "fc_end": "2026-11-16"
+  },
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-11-29",
+   "fc_end": "2026-12-03"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-12-04",
+   "fc_end": "2026-12-04"
+  },
+  {
+   "act": "high_arch",
+   "fc_start": "2026-11-22",
+   "fc_end": "2026-11-24"
+  },
+  {
+   "act": "nose_cone",
+   "fc_start": "2026-11-25",
+   "fc_end": "2026-11-26"
+  },
+  {
+   "act": "rhs_seat",
+   "fc_start": "2026-11-29",
+   "fc_end": "2026-11-30"
+  },
+  {
+   "act": "lhs_seat",
+   "fc_start": "2026-12-01",
+   "fc_end": "2026-12-02"
+  }
+ ],
+ "reason": "Change due to delay with the truck (+6 wd)"
+}
