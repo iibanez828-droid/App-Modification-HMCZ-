@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-03T11:21:58.792039+00:00",
+ "user": "admin",
+ "truck": "RD225",
+ "act": "nose_cone",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 50,
+   "actual_mh": 0.0,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-11-03",
+   "remarks": "Still welder working on the high arch",
+   "status": "in_progress"
+  }
+ ],
+ "comment": ""
+}
