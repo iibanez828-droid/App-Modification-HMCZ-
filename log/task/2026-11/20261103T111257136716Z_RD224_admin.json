@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-03T11:12:57.136716+00:00",
+ "user": "admin",
+ "truck": "RD224",
+ "act": "nose_cone",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 2.0,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-11-02",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": "Finish at night shift"
+}
