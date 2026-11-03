@@ -1,0 +1,14 @@
+{
+ "kind": "scope",
+ "ts": "2026-11-03T12:22:55.334826+00:00",
+ "user": "admin",
+ "op": "new_activity",
+ "act": "cx_stress_gauges_test_and_a",
+ "name": "Stress gauges test and acquiring data HCM test",
+ "external": false,
+ "trucks": [
+  "RD228"
+ ],
+ "start": "2026-11-02",
+ "end": "2026-11-16"
+}
