@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-03T10:36:34.202532+00:00",
+ "user": "admin",
+ "truck": "RD220",
+ "act": "cx_release_to_s3_assembly",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 4.0,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-10-23",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": "Truck released to assembly"
+}
