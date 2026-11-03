@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-03T11:15:45.771746+00:00",
+ "user": "admin",
+ "truck": "RD224",
+ "act": "lhs_seat",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 5.0,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-11-02",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": "Task finish at night shift"
+}
