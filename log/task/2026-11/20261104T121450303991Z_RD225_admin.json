@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-04T12:14:50.303991+00:00",
+ "user": "admin",
+ "truck": "RD225",
+ "act": "rhs_seat",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 0.0,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-11-04",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
