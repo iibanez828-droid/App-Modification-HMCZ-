@@ -1,0 +1,49 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-09T09:36:42.258504+00:00",
+ "user": "admin",
+ "truck": "RD226",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "fc_start": "2026-11-09",
+   "fc_end": "2026-11-11"
+  },
+  {
+   "act": "trunnion_cap",
+   "fc_start": "2026-11-12",
+   "fc_end": "2026-11-13"
+  },
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-11-14",
+   "fc_end": "2026-11-24"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-11-25",
+   "fc_end": "2026-11-27"
+  },
+  {
+   "act": "high_arch",
+   "fc_start": "2026-11-20",
+   "fc_end": "2026-11-22"
+  },
+  {
+   "act": "nose_cone",
+   "fc_start": "2026-11-25",
+   "fc_end": "2026-11-27"
+  },
+  {
+   "act": "rhs_seat",
+   "fc_start": "2026-11-25",
+   "fc_end": "2026-11-27"
+  },
+  {
+   "act": "lhs_seat",
+   "fc_start": "2026-11-28",
+   "fc_end": "2026-12-05"
+  }
+ ],
+ "reason": "Reschedule RD226 to 09-Nov-2026 - 05-Dec-2026"
+}
