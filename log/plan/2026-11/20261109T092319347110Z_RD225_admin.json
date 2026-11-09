@@ -1,0 +1,18 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-09T09:23:19.347110+00:00",
+ "user": "admin",
+ "truck": "RD225",
+ "changes": [
+  {
+   "act": "trunnion_mod",
+   "fc_end": "2026-11-18"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-11-18",
+   "fc_end": "2026-11-18"
+  }
+ ],
+ "reason": "Updated Lining boring plan"
+}
