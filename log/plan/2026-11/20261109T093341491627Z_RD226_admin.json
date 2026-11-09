@@ -1,0 +1,49 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-09T09:33:41.491627+00:00",
+ "user": "admin",
+ "truck": "RD226",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "fc_start": "2026-11-13",
+   "fc_end": "2026-11-13"
+  },
+  {
+   "act": "trunnion_cap",
+   "fc_start": "2026-11-14",
+   "fc_end": "2026-11-14"
+  },
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-11-15",
+   "fc_end": "2026-11-18"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-11-19",
+   "fc_end": "2026-11-19"
+  },
+  {
+   "act": "high_arch",
+   "fc_start": "2026-11-17",
+   "fc_end": "2026-11-17"
+  },
+  {
+   "act": "nose_cone",
+   "fc_start": "2026-11-19",
+   "fc_end": "2026-11-19"
+  },
+  {
+   "act": "rhs_seat",
+   "fc_start": "2026-11-19",
+   "fc_end": "2026-11-19"
+  },
+  {
+   "act": "lhs_seat",
+   "fc_start": "2026-11-20",
+   "fc_end": "2026-11-22"
+  }
+ ],
+ "reason": "Update (+4 wd)"
+}
