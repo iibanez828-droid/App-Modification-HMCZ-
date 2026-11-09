@@ -1,0 +1,13 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-09T09:40:40.559228+00:00",
+ "user": "admin",
+ "truck": "RD226",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "fc_end": "2026-11-09"
+  }
+ ],
+ "reason": "Update"
+}
