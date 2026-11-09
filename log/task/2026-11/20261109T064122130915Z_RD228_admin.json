@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-09T06:41:22.130915+00:00",
+ "user": "admin",
+ "truck": "RD228",
+ "act": "cx_stress_gauges_test_and_a",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 50,
+   "actual_mh": 0.0,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-11-09",
+   "remarks": "",
+   "status": "in_progress"
+  }
+ ],
+ "comment": "All straung guayes has been installed on the truck"
+}
