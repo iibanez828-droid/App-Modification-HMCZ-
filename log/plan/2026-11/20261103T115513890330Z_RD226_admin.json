@@ -22,8 +22,8 @@
    "act": "trunnion_mod",
    "fc_start": "2026-11-13",
    "fc_end": "2026-11-16",
-   "base_start": "2026-12-06",
-   "base_end": "2026-12-09"
+   "base_start": "2026-11-09",
+   "base_end": "2026-12-04"
   },
   {
    "act": "trailing_assy",

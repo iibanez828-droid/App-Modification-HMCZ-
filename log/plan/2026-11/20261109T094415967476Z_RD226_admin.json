@@ -1,0 +1,14 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-09T09:44:15.967476+00:00",
+ "user": "admin",
+ "truck": "RD226",
+ "changes": [
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-11-09",
+   "fc_end": "2026-12-04"
+  }
+ ],
+ "reason": "Trunnion modification 09-Nov-2026 - 04-Dec-2026"
+}
