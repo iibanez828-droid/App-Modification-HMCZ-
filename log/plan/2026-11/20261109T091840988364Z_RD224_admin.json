@@ -1,0 +1,14 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-09T09:18:40.988364+00:00",
+ "user": "admin",
+ "truck": "RD224",
+ "changes": [
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-11-13",
+   "fc_end": "2026-11-13"
+  }
+ ],
+ "reason": "Update with lining boring"
+}
