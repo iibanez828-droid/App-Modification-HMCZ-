@@ -1,0 +1,17 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-11T11:37:35.639718+00:00",
+ "user": "admin",
+ "truck": "RD227",
+ "changes": [
+  {
+   "act": "high_arch",
+   "fc_start": "2026-11-10"
+  }
+ ],
+ "reason": "RD226 has fire supression issure",
+ "weekend": {
+  "sat": true,
+  "sun": true
+ }
+}
