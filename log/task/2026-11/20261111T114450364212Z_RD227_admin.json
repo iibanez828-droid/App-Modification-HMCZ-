@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-11T11:44:50.364212+00:00",
+ "user": "admin",
+ "truck": "RD227",
+ "act": "high_arch",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 45,
+   "actual_mh": 0.0,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-11-11",
+   "remarks": "",
+   "status": "in_progress"
+  }
+ ],
+ "comment": ""
+}
