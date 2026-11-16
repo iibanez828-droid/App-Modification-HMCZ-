@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-16T09:30:21.917468+00:00",
+ "user": "iibanez",
+ "truck": "RD227",
+ "act": "nose_cone",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 13.5,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-11-08",
+   "remarks": "Task has been finished",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
