@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-16T09:35:24.466397+00:00",
+ "user": "iibanez",
+ "truck": "RD229",
+ "act": "trunnion_cap",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 9.0,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-11-12",
+   "remarks": "Trunnions caps modification has been completed",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
