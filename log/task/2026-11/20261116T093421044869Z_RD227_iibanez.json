@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-16T09:34:21.044869+00:00",
+ "user": "iibanez",
+ "truck": "RD227",
+ "act": "trunnion_cap",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 70,
+   "actual_mh": 6.5,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-11-16",
+   "remarks": "Trunnions caps has been send it to workshop waiting to arrive estimated date on site Nov 16.",
+   "status": "in_progress"
+  }
+ ],
+ "comment": ""
+}
