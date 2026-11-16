@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-16T09:14:22.381466+00:00",
+ "user": "iibanez",
+ "truck": "RD225",
+ "act": "trunnion_cap",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 24.0,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "3 mechanics,",
+   "date": "2026-11-16",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": "Archer san finished by Nov 15 day shift"
+}
