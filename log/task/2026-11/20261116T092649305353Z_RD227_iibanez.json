@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-16T09:26:49.305353+00:00",
+ "user": "iibanez",
+ "truck": "RD227",
+ "act": "trailing_lower",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 6.0,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "3 Technicians",
+   "date": "2026-11-11",
+   "remarks": "Front axle has been secured using stand and blocks, trunnions caps has been send out for machining.",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
