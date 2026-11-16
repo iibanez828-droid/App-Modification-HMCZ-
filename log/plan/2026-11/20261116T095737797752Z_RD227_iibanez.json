@@ -1,0 +1,37 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-16T09:57:37.797752+00:00",
+ "user": "iibanez",
+ "truck": "RD227",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "assigned_to": "SWB - John"
+  },
+  {
+   "act": "trunnion_cap",
+   "assigned_to": "SWB - John"
+  },
+  {
+   "act": "trunnion_mod",
+   "assigned_to": "SWB - John"
+  },
+  {
+   "act": "high_arch",
+   "assigned_to": "SWB - Andrew"
+  },
+  {
+   "act": "nose_cone",
+   "assigned_to": "SWB - Andrew"
+  },
+  {
+   "act": "rhs_seat",
+   "assigned_to": "SWB - John"
+  },
+  {
+   "act": "lhs_seat",
+   "assigned_to": "SWB - John"
+  }
+ ],
+ "reason": "Forecast and original plan aligned with actual dates (keep assignments)"
+}

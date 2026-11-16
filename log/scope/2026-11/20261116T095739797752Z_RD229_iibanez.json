@@ -1,0 +1,44 @@
+{
+ "kind": "scope",
+ "ts": "2026-11-16T09:57:39.797752+00:00",
+ "user": "iibanez",
+ "op": "add_truck",
+ "truck": "RD229",
+ "acts": [
+  {
+   "act": "trailing_lower",
+   "start": "2026-11-05",
+   "end": "2026-11-05"
+  },
+  {
+   "act": "trunnion_cap",
+   "start": "2026-11-06",
+   "end": "2026-11-12"
+  },
+  {
+   "act": "trunnion_mod",
+   "start": "2026-11-23",
+   "end": "2026-11-26"
+  },
+  {
+   "act": "trailing_assy",
+   "start": "2026-11-27",
+   "end": "2026-11-27"
+  },
+  {
+   "act": "high_arch",
+   "start": "2026-11-06",
+   "end": "2026-11-06"
+  },
+  {
+   "act": "nose_cone",
+   "start": "2026-11-07",
+   "end": "2026-11-07"
+  },
+  {
+   "act": "lhs_seat",
+   "start": "2026-11-07",
+   "end": "2026-11-07"
+  }
+ ]
+}
