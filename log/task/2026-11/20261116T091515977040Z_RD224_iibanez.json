@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-16T09:15:15.977040+00:00",
+ "user": "iibanez",
+ "truck": "RD224",
+ "act": "trunnion_mod",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 24.0,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-11-16",
+   "remarks": "Archer san finished the modification by Nov 16 day shift",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
