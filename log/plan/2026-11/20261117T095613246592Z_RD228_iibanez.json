@@ -1,0 +1,19 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-17T09:56:13.246592+00:00",
+ "user": "iibanez",
+ "truck": "RD228",
+ "changes": [
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-12-03",
+   "fc_end": "2026-12-03"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-12-03",
+   "fc_end": "2026-12-03"
+  }
+ ],
+ "reason": "Update"
+}
