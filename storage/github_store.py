@@ -1,7 +1,8 @@
 """Almacenamiento en la rama `data` del repositorio de GitHub.
 
-- Lectura: descarga la rama completa en un solo paquete (tarball). Es una sola
-  petición sin importar cuántos archivos haya.
+- Lectura: pide el último commit de la rama y descarga ese commit completo en
+  un solo paquete (tarball). Descargar por commit, y no por nombre de rama,
+  evita recibir una copia en caché anterior al último guardado.
 - Escritura: crea o reemplaza un archivo con la API de contenidos. Cada
   escritura es un commit en la rama `data`; la rama `main` (el código) no se
   toca, así que la app no se reinicia al guardar.
@@ -56,9 +57,20 @@ class GitHubStore(Store):
         return f"{API}/repos/{self.repo}/contents/{quote(path)}"
 
     # ── Lectura ─────────────────────────────────────────────────────────
-    def read_all(self) -> dict[str, bytes]:
+    def _head_sha(self) -> str | None:
+        """SHA del último commit de la rama (una petición liviana); None si no se puede obtener."""
         try:
-            resp = self.session.get(f"{API}/repos/{self.repo}/tarball/{quote(self.branch)}", timeout=TIMEOUT)
+            resp = self.session.get(f"{API}/repos/{self.repo}/commits/{quote(self.branch)}",
+                                    headers={"Accept": "application/vnd.github.sha"}, timeout=TIMEOUT)
+        except requests.RequestException:
+            return None
+        sha = resp.text.strip() if resp.ok else ""
+        return sha if len(sha) == 40 and all(c in "0123456789abcdef" for c in sha) else None
+
+    def read_all(self) -> dict[str, bytes]:
+        ref = self._head_sha() or self.branch
+        try:
+            resp = self.session.get(f"{API}/repos/{self.repo}/tarball/{quote(ref)}", timeout=TIMEOUT)
         except requests.RequestException as exc:
             raise StorageError(f"No hay conexión con GitHub: {exc}") from exc
         self._check(resp, "leer datos")

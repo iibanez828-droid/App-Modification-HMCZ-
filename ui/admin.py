@@ -181,8 +181,9 @@ def _gantt(ctx: Ctx) -> None:
     t, p = ctx.t, ctx.project
     tr = p.trucks
     c1, c2, c3 = st.columns([1.2, 1.2, 3], vertical_alignment="bottom")
-    show_future = c1.toggle(t("show_future"), key="g_future")
-    show_done = c2.toggle(t("show_completed"), key="g_done")
+    # Por defecto se ven todos los camiones, como en la vista pública; los interruptores permiten filtrar
+    show_future = c1.toggle(t("show_future"), value=True, key="g_future")
+    show_done = c2.toggle(t("show_completed"), value=True, key="g_done")
     allowed = tr[tr.status.isin(EDITABLE_STATUSES)
                  | (show_future & tr.status.eq("future"))
                  | (show_done & tr.status.eq("completed"))].truck.tolist()
@@ -195,13 +196,32 @@ def _gantt(ctx: Ctx) -> None:
 
 
 # ─── 3. Plan (fechas del pronóstico) ──────────────────────────────────────
+def _parse_date(val) -> tuple[date | None, bool]:
+    """Fecha editada en la tabla → (fecha, válida). Vacío = sin fecha. Un valor mal escrito
+    (p. ej. un año de 6 cifras) no debe tumbar la página: se informa y no se guarda."""
+    if val in (None, ""):
+        return None, True
+    try:
+        d = date.fromisoformat(str(val)[:10])
+    except ValueError:
+        return None, False
+    return (d, True) if 2000 <= d.year <= 2100 else (None, False)
+
+
 def _plan(ctx: Ctx) -> None:
+    """Fechas del plan de un camión. La tabla, los fines de semana y el motivo van en un
+    formulario: nada se envía mientras se edita y todo se guarda junto al presionar el
+    botón. Así no se pierden ediciones por las recargas de la página entre una celda y otra."""
     t, p = ctx.t, ctx.project
     tr = p.trucks
     note(t("plan_help", days=p.settings.get("lookahead_days", 14)))
     c1, c2 = st.columns([1, 2], vertical_alignment="bottom")
     show_all = c2.toggle(t("plan_show_all"), key="plan_all")
     options = tr.truck.tolist() if show_all else tr[tr.status.isin(EDITABLE_STATUSES)].truck.tolist()
+    # El camión elegido sigue en la lista aunque, con las fechas nuevas, ya no esté por empezar
+    current = st.session_state.get("plan_truck")
+    if current in tr.truck.values and current not in options:
+        options = sorted(options + [current])
     if not options:
         note(t("no_active_trucks"))
         return
@@ -212,11 +232,6 @@ def _plan(ctx: Ctx) -> None:
 
     nonce = st.session_state.setdefault(f"plan_nonce_{truck}", 0)
     cal0 = p.calendar(truck)
-    c1, c2, _ = st.columns([1, 1, 3])
-    sat = c1.checkbox(t("work_saturday"), value=cal0.saturday, key=f"sat_{truck}_{nonce}")
-    sun = c2.checkbox(t("work_sunday"), value=cal0.sunday, key=f"sun_{truck}_{nonce}")
-    cal = WorkCalendar.build(sat, sun, p.settings.get("holidays", []))
-
     acts = p.truck_activities(truck).reset_index(drop=True)
     base = pd.DataFrame({
         "act": acts.act_key.map(lambda k: act_name(t, k)),
@@ -227,29 +242,48 @@ def _plan(ctx: Ctx) -> None:
         "assigned_to": acts.assigned_to,
     })
     key = f"plan_ed_{truck}_{nonce}"
-    st.data_editor(
-        base, key=key, hide_index=True, width="stretch", num_rows="fixed",
-        disabled=["act", "ext", "progress"],
-        column_config={
-            "act": st.column_config.TextColumn(t("activity"), width=200),
-            "ext": st.column_config.CheckboxColumn(t("external"), width=70),
-            "progress": st.column_config.ProgressColumn(t("progress"), min_value=0, max_value=100, format="%.0f%%", width=100),
-            "base_start": st.column_config.DateColumn(t("base_start"), format="DD-MMM-YYYY", help=t("baseline_help")),
-            "base_end": st.column_config.DateColumn(t("base_end"), format="DD-MMM-YYYY", help=t("baseline_help")),
-            "fc_start": st.column_config.DateColumn(t("fc_start"), format="DD-MMM-YYYY"),
-            "fc_end": st.column_config.DateColumn(t("fc_end"), format="DD-MMM-YYYY"),
-            "assigned_to": st.column_config.TextColumn(t("assigned_to")),
-        },
-    )
+
+    note(t("plan_form_help"))
+    with st.form(f"plan_form_{truck}_{nonce}", border=False):
+        c1, c2, _ = st.columns([1, 1, 3])
+        sat = c1.checkbox(t("work_saturday"), value=cal0.saturday, key=f"sat_{truck}_{nonce}")
+        sun = c2.checkbox(t("work_sunday"), value=cal0.sunday, key=f"sun_{truck}_{nonce}")
+        st.data_editor(
+            base, key=key, hide_index=True, width="stretch", num_rows="fixed",
+            disabled=["act", "ext", "progress"],
+            column_config={
+                "act": st.column_config.TextColumn(t("activity"), width=200),
+                "ext": st.column_config.CheckboxColumn(t("external"), width=70),
+                "progress": st.column_config.ProgressColumn(t("progress"), min_value=0, max_value=100, format="%.0f%%",
+                                                            width=100),
+                "base_start": st.column_config.DateColumn(t("base_start"), format="DD-MMM-YYYY", help=t("baseline_help")),
+                "base_end": st.column_config.DateColumn(t("base_end"), format="DD-MMM-YYYY", help=t("baseline_help")),
+                "fc_start": st.column_config.DateColumn(t("fc_start"), format="DD-MMM-YYYY"),
+                "fc_end": st.column_config.DateColumn(t("fc_end"), format="DD-MMM-YYYY"),
+                "assigned_to": st.column_config.TextColumn(t("assigned_to")),
+            },
+        )
+        preview = st.container()  # se completa abajo, con las fechas editadas
+        reason = st.text_input(t("change_reason"), key=f"reason_{truck}_{nonce}", placeholder=t("change_reason_ph"))
+        c1, c2, c3 = st.columns([1, 1, 2], vertical_alignment="center")
+        c1.form_submit_button(t("plan_check"), icon=":material/visibility:", width="stretch")
+        save = c2.form_submit_button(t("save_plan"), type="primary", icon=":material/save:", width="stretch")
+        status = c3.empty()
+
+    cal = WorkCalendar.build(sat, sun, p.settings.get("holidays", []))
     edited = base.copy()
+    errors = []
     for idx, changes in (st.session_state.get(key) or {}).get("edited_rows", {}).items():
         for col, val in changes.items():
             if col in ("base_start", "base_end", "fc_start", "fc_end"):
-                val = date.fromisoformat(str(val)[:10]) if val else None
+                val, ok = _parse_date(val)
+                if not ok:
+                    errors.append(t("err_invalid_date", act=base.at[int(idx), "act"], value=changes[col]))
+                    continue
             edited.at[int(idx), col] = val
 
     # Vista previa con las fechas editadas
-    errors, changes = [], []
+    changes, summary = [], []  # summary: (advertencia, texto) por cada celda que cambia
     work_days: set = set()
     for i, r in edited.iterrows():
         a = acts.loc[i]
@@ -265,38 +299,53 @@ def _plan(ctx: Ctx) -> None:
         for col in ("fc_start", "fc_end"):
             if r[col] != base.at[i, col]:
                 ch[col] = r[col].isoformat() if r[col] else ""
-        for col in ("base_start", "base_end"):
-            if r[col] != base.at[i, col] and not base.at[i, col] and r[col]:
+        for col in ("base_start", "base_end"):  # fechas reales: se pueden corregir, no borrar
+            if r[col] and r[col] != base.at[i, col]:
                 ch[col] = r[col].isoformat()
-        if (r.assigned_to or "") != (base.at[i, "assigned_to"] or ""):
+        if (r.assigned_to or "").strip() != (base.at[i, "assigned_to"] or "").strip():
             ch["assigned_to"] = (r.assigned_to or "").strip()
         if len(ch) > 1:
             changes.append(ch)
+            for col in ("base_start", "base_end", "fc_start", "fc_end", "assigned_to"):
+                if col in ch:
+                    old, new = base.at[i, col], r[col]
+                    fmt = (lambda v: v or "—") if col == "assigned_to" else fmt_date
+                    summary.append((col == "assigned_to" and not new,
+                                    f"**{r.act}** · {t(col)}: {fmt(old)} → {fmt(new)}"))
     starts = [d for d in edited.fc_start if d]
     ends = [d for d in edited.fc_end if d]
     limit = int(p.settings.get("max_working_days", 5))
-    kpi_cards([
-        (t("own_work_days"), f"{len(work_days)} / {limit}", t("own_work_days_sub"), "red" if len(work_days) > limit else "green"),
-        (t("fc_start"), fmt_date(min(starts) if starts else None), "", ""),
-        (t("fc_end"), fmt_date(max(ends) if ends else None), "", ""),
-        (t("delay_wd"), f"{cal.delay(row.base_end, max(ends) if ends else None):+d}", t("vs_original"), ""),
-    ])
     weekend_changed = (sat, sun) != (cal0.saturday, cal0.sunday)
-    for e in errors:
-        st.error(e, icon=":material/block:")
+    with preview:
+        kpi_cards([
+            (t("own_work_days"), f"{len(work_days)} / {limit}", t("own_work_days_sub"),
+             "red" if len(work_days) > limit else "green"),
+            (t("fc_start"), fmt_date(min(starts) if starts else None), "", ""),
+            (t("fc_end"), fmt_date(max(ends) if ends else None), "", ""),
+            (t("delay_wd"), f"{cal.delay(row.base_end, max(ends) if ends else None):+d}", t("vs_original"), ""),
+        ])
+        for e in errors:
+            st.error(e, icon=":material/block:")
+        if summary:
+            st.markdown(f"**{t('plan_summary_title')}**")
+            st.markdown("\n".join(f"- {':orange[⚠] ' if warn else ''}{txt}" for warn, txt in summary))
+            if any(warn for warn, _ in summary):
+                st.warning(t("plan_cleared_warning"), icon=":material/warning:")
+    status.caption(t("plan_changes", n=len(changes)))
 
-    reason = st.text_input(t("change_reason"), key=f"reason_{truck}_{nonce}", placeholder=t("change_reason_ph"))
-    c1, c2 = st.columns([1, 3], vertical_alignment="center")
-    c2.caption(t("plan_changes", n=len(changes)))
-    if c1.button(t("save_plan"), type="primary", icon=":material/save:", key=f"save_plan_{truck}_{nonce}",
-                 disabled=bool(errors) or not (changes or weekend_changed), width="stretch"):
-        if not reason.strip():
-            st.error(t("err_reason"))
+    if save:
+        if errors:
+            status.error(errors[0], icon=":material/block:")
+        elif not (changes or weekend_changed):
+            status.warning(t("plan_no_changes"), icon=":material/info:")
+        elif not reason.strip():
+            status.error(t("err_reason"), icon=":material/edit_note:")
         else:
-            payload = {"truck": truck, "changes": changes, "reason": reason.strip()}
+            payload = {"truck": truck, "changes": changes, "reason": reason.strip(), "v": 2}
             if weekend_changed:
                 payload["weekend"] = {"sat": sat, "sun": sun}
-            if safe_write(ctx, lambda: write_event(ctx.store, "plan", payload, ctx.user.username, truck), t("plan_saved")):
+            if safe_write(ctx, lambda: write_event(ctx.store, "plan", payload, ctx.user.username, truck),
+                          t("plan_saved_n", n=len(changes))):
                 st.session_state[f"plan_nonce_{truck}"] = nonce + 1
                 st.rerun()
 

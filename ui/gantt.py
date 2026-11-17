@@ -255,9 +255,10 @@ def _finish(fig: go.Figure, p: Project, t: T, rows: list[str], row_height: int =
     fig.add_annotation(x=pd.Timestamp(p.today), y=1.0, yref="paper", text=t("today"), showarrow=False, xanchor="left",
                        font=dict(color=config.ORANGE, size=11), xshift=4, yshift=-8)
     fig.update_layout(
-        barmode="overlay", height=max(320, row_height * len(rows) + 120),
-        margin=dict(l=10, r=10, t=50, b=40), plot_bgcolor="white",
-        legend=dict(orientation="h", yanchor="top", y=-0.01, x=0),
+        # La leyenda va debajo del gráfico, en su propio espacio (margen inferior), sin tapar la última fila
+        barmode="overlay", height=max(360, row_height * len(rows) + 170),
+        margin=dict(l=10, r=10, t=50, b=90), plot_bgcolor="white",
+        legend=dict(orientation="h", yanchor="bottom", y=0.005, yref="container", x=0.005, xref="container"),
         font=dict(family="Barlow, sans-serif", size=12, color="#1A1A1A"),
         xaxis=dict(type="date", gridcolor="#EEEEEE", tickformat="%d-%b", dtick=7 * DAY_MS,
                    showgrid=True, side="top"),

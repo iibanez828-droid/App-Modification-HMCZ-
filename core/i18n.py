@@ -238,20 +238,35 @@ TEXTS: dict[str, tuple[str, str]] = {
 
     # ── Plan ──
     "plan_help": ("The list shows the trucks starting within {days} days; turn on «Show all trucks» to edit any other "
-                  "truck. The original plan stays fixed; only the forecast changes. Every change is recorded with its reason.",
+                  "truck. You can change the actual and the forecast dates. Every change is recorded with its reason.",
                   "一覧には {days} 日以内に開始する車両が表示されます。他の車両を編集するには「全車両を表示」をオンにしてください。"
-                  "当初計画は固定され、変更されるのは予測のみです。すべての変更は理由とともに記録されます。"),
+                  "実績日と予測日を変更できます。すべての変更は理由とともに記録されます。"),
     "plan_show_all": ("Show all trucks (including future and completed)", "全車両を表示（将来・完了を含む）"),
     "work_saturday": ("Work on Saturday", "土曜日稼働"),
     "work_sunday": ("Work on Sunday", "日曜日稼働"),
-    "baseline_help": ("The original plan is fixed. It can only be filled in where it is empty.",
-                      "当初計画は固定です。空欄の場合のみ入力できます。"),
+    "baseline_help": ("Actual date. It can be corrected (not cleared); every change is saved with its reason.",
+                      "実績日。修正できます（空欄にはできません）。すべての変更は理由とともに保存されます。"),
     "change_reason": ("Reason for the change", "変更理由"),
     "change_reason_ph": ("e.g. parts arrived late, contractor rescheduled…", "例：部品の到着遅れ、業者の日程変更…"),
     "err_reason": ("Write the reason for the change.", "変更理由を入力してください。"),
     "err_end_before_start": ("{act}: the end date is before the start date.", "{act}：終了日が開始日より前です。"),
     "plan_changes": ("{n} activity(ies) changed.", "{n} 件の作業項目が変更されています。"),
     "save_plan": ("Save plan", "計画を保存"),
+    "plan_form_help": ("Edit the dates and the weekend days, write the reason and press «Save plan». Nothing is sent "
+                       "while you edit, so you can change several cells calmly. «Check changes» updates the "
+                       "preview without saving.",
+                       "日付と週末稼働を編集し、理由を入力して「計画を保存」を押してください。編集中は何も送信されないため、"
+                       "複数のセルを落ち着いて変更できます。「変更を確認」は保存せずにプレビューを更新します。"),
+    "plan_summary_title": ("Changes to be saved:", "保存される変更："),
+    "plan_cleared_warning": ("Some «Assigned to» names will be cleared (⚠). If that was not intended, undo it in the "
+                             "table before saving.",
+                             "一部の「担当」が空欄になります（⚠）。意図しない場合は、保存する前に表で元に戻してください。"),
+    "plan_check": ("Check changes", "変更を確認"),
+    "plan_no_changes": ("No changes to save: edit a date or a weekend day first.",
+                        "保存する変更はありません。先に日付または週末稼働を変更してください。"),
+    "err_invalid_date": ("{act}: «{value}» is not a valid date. Correct it before saving.",
+                         "{act}：「{value}」は有効な日付ではありません。保存する前に修正してください。"),
+    "plan_saved_n": ("Plan saved: {n} activity(ies) updated.", "計画を保存しました：{n} 件の作業項目を更新。"),
     "plan_saved": ("Plan updated.", "計画を更新しました。"),
     "shift_title": ("Shift all pending activities", "未完了の作業をまとめて移動"),
     "shift_help": ("Moves the forecast of every activity that is not complete by N working days, using this truck's calendar.",

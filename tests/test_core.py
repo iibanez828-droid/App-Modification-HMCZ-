@@ -257,3 +257,28 @@ def test_every_dynamic_key_is_translated():
     missing = [k for k in keys if k not in TEXTS]
     assert not missing
     assert all(len(v) == 2 and v[0] and v[1] for v in TEXTS.values())
+
+
+def test_plan_date_parsing_never_breaks_the_page():
+    from datetime import date
+    from ui.admin import _parse_date
+    assert _parse_date("2026-11-25") == (date(2026, 11, 25), True)
+    assert _parse_date("2026-11-25T00:00:00.000") == (date(2026, 11, 25), True)
+    assert _parse_date(None) == (None, True) and _parse_date("") == (None, True)
+    assert _parse_date("+112026-11-28") == (None, False)  # año mal escrito en la celda
+    assert _parse_date("3026-11-28") == (None, False)
+    assert _parse_date("garbage") == (None, False)
+
+
+def test_actual_dates_can_be_corrected_only_by_new_saves(store):
+    from core.events import write_event
+    p = build_project(store.snapshot(), today=TODAY)
+    act = p.truck_activities("RD224").iloc[0]
+    assert act.base_end  # ya tiene fecha real
+    old = {"truck": "RD224", "changes": [{"act": act.act_key, "base_end": "2026-12-31"}], "reason": "old"}
+    write_event(store, "plan", old, "admin", "RD224")  # guardado anterior (sin versión): no la cambia
+    assert build_project(store.snapshot(), today=TODAY).truck_activities("RD224").iloc[0].base_end == act.base_end
+    write_event(store, "plan", {**old, "v": 2, "changes": [{"act": act.act_key, "base_end": "2026-12-30"}]},
+                "admin", "RD224")
+    from datetime import date
+    assert build_project(store.snapshot(), today=TODAY).truck_activities("RD224").iloc[0].base_end == date(2026, 12, 30)

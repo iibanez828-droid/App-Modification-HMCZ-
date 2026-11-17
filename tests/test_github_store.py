@@ -66,3 +66,37 @@ def test_recent_writes_are_visible_before_github_catches_up(monkeypatch):
     monkeypatch.setattr(store.session, "get", lambda *a, **k: Resp(200, _tarball({})))
     store.write("log/task/new.json", b"{}", "msg")
     assert "log/task/new.json" in store.snapshot()
+
+
+def test_read_all_downloads_the_latest_commit_not_the_cached_branch(monkeypatch):
+    store = GitHubStore("tok", "owner/repo", "data")
+    sha, urls = "a" * 40, []
+
+    def get(url, **k):
+        urls.append(url)
+        if url.endswith("/commits/data"):
+            r = Resp(200)
+            r.text = sha
+            return r
+        return Resp(200, _tarball({"plan/baseline.csv": b"x"}))
+
+    monkeypatch.setattr(store.session, "get", get)
+    assert store.read_all() == {"plan/baseline.csv": b"x"}
+    assert urls[-1].endswith(f"/tarball/{sha}")
+    # Si no se obtiene el commit, se usa la rama como antes
+    monkeypatch.setattr(store.session, "get", lambda url, **k: Resp(500) if "/commits/" in url
+                        else Resp(200, _tarball({})))
+    assert store.read_all() == {}
+
+
+def test_recent_writes_are_dropped_once_github_returns_them(monkeypatch):
+    store = GitHubStore("tok", "owner/repo", "data")
+    remote: dict[str, bytes] = {}
+    monkeypatch.setattr(store.session, "put", lambda *a, **k: Resp(201))
+    monkeypatch.setattr(store.session, "get", lambda url, **k: Resp(404) if "/commits/" in url
+                        else Resp(200, _tarball(remote)))
+    store.write("log/plan/new.json", b"{}", "msg")
+    assert store.snapshot()["log/plan/new.json"] == b"{}"  # GitHub todavía no lo devuelve
+    # En cuanto GitHub lo devuelve, manda lo que hay en GitHub (p. ej. un arreglo manual)
+    remote["log/plan/new.json"] = b'{"fixed": 1}'
+    assert store.snapshot()["log/plan/new.json"] == b'{"fixed": 1}' and not store._recent

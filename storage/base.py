@@ -24,9 +24,11 @@ class Store(ABC):
         # cada escritura para que el caché de lectura se renueve al instante.
         self.version = 0
         self._lock = threading.Lock()
-        # Escrituras recientes: GitHub puede tardar unos segundos en mostrar
-        # un commit nuevo en la descarga de la rama; mientras tanto se
-        # completan los datos leídos con lo que esta app acaba de guardar.
+        # Escrituras recientes: GitHub puede tardar en mostrar un commit nuevo
+        # en la descarga de la rama; mientras tanto se completan los datos
+        # leídos con lo que esta app acaba de guardar. Cada una se descarta en
+        # cuanto la lectura ya trae ese archivo (así un arreglo manual en la
+        # rama de datos no queda tapado) o, como máximo, a los RECENT_SECONDS.
         self._recent: dict[str, tuple[bytes, float]] = {}
 
     @property
@@ -53,8 +55,8 @@ class Store(ABC):
         now = time.time()
         with self._lock:
             for path, (content, ts) in list(self._recent.items()):
-                if now - ts > RECENT_SECONDS:
-                    del self._recent[path]
+                if path in files or now - ts > RECENT_SECONDS:
+                    del self._recent[path]  # GitHub ya lo devuelve (o venció el tope)
                 else:
                     files[path] = content
         return files

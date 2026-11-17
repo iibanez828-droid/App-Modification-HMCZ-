@@ -235,6 +235,9 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
             _apply_scope(ev, rows, task_sel, custom)
             continue
         truck = ev.get("truck")
+        # Desde la versión 2 del guardado, las fechas reales (base_*) se pueden corregir.
+        # Los guardados anteriores solo las completaban si estaban vacías: se respetan igual.
+        overwrite_base = int(ev.get("v", 1)) >= 2
         if "weekend" in ev:
             weekend[truck] = ev["weekend"]
         for ch in ev.get("changes", []):
@@ -244,8 +247,8 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
             for fld in ("fc_start", "fc_end", "assigned_to"):
                 if fld in ch:
                     row[fld] = ch[fld] or ""
-            for fld in ("base_start", "base_end"):  # solo se completa si estaba vacía
-                if ch.get(fld) and not row[fld]:
+            for fld in ("base_start", "base_end"):
+                if ch.get(fld) and (overwrite_base or not row[fld]):
                     row[fld] = ch[fld]
             plan_rows.append({"ts": ev["ts"], "user": ev["user"], "truck": truck, "act_key": ch.get("act"),
                               "fc_start": ch.get("fc_start", ""), "fc_end": ch.get("fc_end", ""),
