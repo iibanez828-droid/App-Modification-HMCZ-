@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-17T12:35:08.306425+00:00",
+ "user": "iibanez",
+ "truck": "RD228",
+ "act": "cx_stress_gauges_test_and_a",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 95.0,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-11-17",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
