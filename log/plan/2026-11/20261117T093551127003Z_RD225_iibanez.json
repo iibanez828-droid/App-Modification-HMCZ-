@@ -1,0 +1,14 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-17T09:35:51.127003+00:00",
+ "user": "iibanez",
+ "truck": "RD225",
+ "changes": [
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-11-23",
+   "fc_end": "2026-11-23"
+  }
+ ],
+ "reason": "Updated"
+}
