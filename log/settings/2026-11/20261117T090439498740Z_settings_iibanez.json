@@ -1,0 +1,11 @@
+{
+ "kind": "settings",
+ "ts": "2026-11-17T09:04:39.498740+00:00",
+ "user": "iibanez",
+ "values": {
+  "lookahead_days": 10,
+  "max_working_days": 5,
+  "timezone": "Africa/Lusaka",
+  "holidays": []
+ }
+}
