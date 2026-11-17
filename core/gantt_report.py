@@ -1,6 +1,7 @@
 """Gantt en PDF (A4 horizontal, membrete LANDCROS) para la vista pública: el
 mismo Gantt de la pantalla (por camión o por actividad, con o sin el plan
-original), con la fecha-hora del último registro de avance de cada Gantt."""
+original, con el Ready to Work de cada camión), con la fecha-hora del último
+registro de avance de cada Gantt."""
 
 from __future__ import annotations
 
@@ -9,8 +10,8 @@ from datetime import date, timedelta
 import pandas as pd
 
 from core import config
-from core.executive_report import (BAR_BASE, BLACK, GREY, LINE, MARGIN, ORANGE, STATUS_RGB, WHITE, _fd, _Report,
-                                   _txt, t)
+from core.executive_report import (BAR_BASE, BLACK, GREY, LINE, MARGIN, ORANGE, RTW_RGB, STATUS_RGB, WHITE, _fd,
+                                   _Report, _txt, t)
 from core.project import Project
 
 STAMP = (165, 165, 165)  # gris claro del sello "último avance"
@@ -20,25 +21,33 @@ ACTIVITY_LEGEND = ("completed", "in_progress", "overdue", "not_started")
 
 
 def _rows(p: Project, trucks: list[str], by_activity: bool) -> list[dict]:
-    """Filas del Gantt: etiqueta, fechas del pronóstico y del plan original, estado y avance."""
+    """Filas del Gantt: etiqueta, fechas del pronóstico y del plan original, estado, avance y Ready to Work.
+    Por actividad, el RTW de cada camión es su última fila; por camión, va en la misma fila."""
     acts = p.activities[p.activities.truck.isin(trucks)]
+    tr = p.trucks[p.trucks.truck.isin(trucks)].sort_values("truck")
     if by_activity:
         out = []
-        for r in acts.sort_values(["truck", "order"]).itertuples():
-            act = config.activity(r.act_key)
-            name = (act.name or t(f"act_{r.act_key}")) + (" (ext.)" if r.external else "")
-            out.append({"truck": r.truck, "label": name, "start": r.fc_start, "end": r.fc_end,
-                        "base_start": r.base_start, "base_end": r.base_end, "status": r.status, "progress": r.progress})
+        for tk in tr.itertuples():
+            for r in acts[acts.truck == tk.truck].sort_values("order").itertuples():
+                act = config.activity(r.act_key)
+                name = (act.name or t(f"act_{r.act_key}")) + (" (ext.)" if r.external else "")
+                out.append({"truck": r.truck, "label": name, "start": r.fc_start, "end": r.fc_end,
+                            "base_start": r.base_start, "base_end": r.base_end, "status": r.status,
+                            "progress": r.progress, "rtw_start": None, "rtw_end": None})
+            out.append({"truck": tk.truck, "label": t("rtw"), "start": None, "end": None, "base_start": None,
+                        "base_end": None, "status": "rtw", "progress": 0.0,
+                        "rtw_start": tk.rtw_start, "rtw_end": tk.rtw_end})
         return out
     base_start = acts.groupby("truck").base_start.agg(lambda s: min((d for d in s if d), default=None))
     return [{"truck": r.truck, "label": r.truck, "start": r.start, "end": r.end, "base_start": base_start.get(r.truck),
-             "base_end": r.base_end, "status": r.status, "progress": r.progress}
-            for r in p.trucks[p.trucks.truck.isin(trucks)].sort_values("truck").itertuples()]
+             "base_end": r.base_end, "status": r.status, "progress": r.progress,
+             "rtw_start": r.rtw_start, "rtw_end": r.rtw_end}
+            for r in tr.itertuples()]
 
 
 def _chart(pdf: _Report, p: Project, rows: list[dict], by_activity: bool, show_baseline: bool) -> None:
-    dates = [r[c] for r in rows for c in ("start", "end") + (("base_start", "base_end") if show_baseline else ())
-             if r[c]] + [p.today]
+    cols = ("start", "end", "rtw_end") + (("base_start", "base_end") if show_baseline else ())
+    dates = [r[c] for r in rows for c in cols if r[c]] + [p.today]
     lo, hi = min(dates) - timedelta(days=2), max(dates) + timedelta(days=3)
     span = max((hi - lo).days, 1)
     truck_w, label_w = (16, 58) if by_activity else (0, 18)
@@ -99,16 +108,20 @@ def _chart(pdf: _Report, p: Project, rows: list[dict], by_activity: bool, show_b
             pdf.set_fill_color(*BAR_BASE)
             pdf.rect(xpos(r["base_start"]), y + row_h * 0.12,
                      xpos(r["base_end"] + timedelta(days=1)) - xpos(r["base_start"]), row_h * 0.2, "F")
+        by, bh = y + row_h * (0.38 if show_baseline else 0.2), row_h * (0.5 if show_baseline else 0.6)
+        size = 5.5 if by_activity else 6.5
         if r["start"] and r["end"]:
             bx, bw = xpos(r["start"]), xpos(r["end"] + timedelta(days=1)) - xpos(r["start"])
-            by, bh = y + row_h * (0.38 if show_baseline else 0.2), row_h * (0.5 if show_baseline else 0.6)
             pdf.set_fill_color(*STATUS_RGB.get(r["status"], GREY))
             pdf.rect(bx, by, bw, bh, "F")
             if bw > 8:
                 pdf.set_xy(bx, by)
-                pdf.set_font("Helvetica", "B", 5.5 if by_activity else 6.5)
+                pdf.set_font("Helvetica", "B", size)
                 pdf.set_text_color(*WHITE)
                 pdf.cell(bw, bh, f"{r['progress'] * 100:.0f}%", align="C")
+        if r["rtw_start"] and r["rtw_end"]:
+            pdf.rtw_bar(xpos(r["rtw_start"]), by, xpos(r["rtw_end"] + timedelta(days=1)) - xpos(r["rtw_start"]), bh,
+                        size)
         y += row_h
     today_line(top, y)
     pdf.set_y(y + 2)
@@ -117,21 +130,9 @@ def _chart(pdf: _Report, p: Project, rows: list[dict], by_activity: bool, show_b
 def _legend_and_stamp(pdf: _Report, p: Project, trucks: list[str], by_activity: bool, show_baseline: bool) -> None:
     """Leyenda a la izquierda y, en gris claro abajo a la derecha, la fecha-hora del último registro de avance."""
     y = pdf.get_y()
-    legend = ([("Original plan", BAR_BASE)] if show_baseline else []) + \
-             [(t("st_" + s), STATUS_RGB[s]) for s in (ACTIVITY_LEGEND if by_activity else TRUCK_LEGEND)]
-    pdf.set_font("Helvetica", "", 6.5)
-    pdf.set_text_color(*GREY)
-    x = MARGIN
-    for label, rgb in legend:
-        pdf.set_fill_color(*rgb)
-        pdf.rect(x, y + 1.2, 3, 2, "F")
-        pdf.set_xy(x + 4, y)
-        pdf.cell(22, 4.5, _txt(label))
-        x += 26
-    pdf.set_fill_color(*ORANGE)
-    pdf.rect(x, y + 2, 3, 0.5, "F")
-    pdf.set_xy(x + 4, y)
-    pdf.cell(20, 4.5, "Today")
+    pdf.legend(([("Original plan", BAR_BASE)] if show_baseline else [])
+               + [(t("st_" + s), STATUS_RGB[s]) for s in (ACTIVITY_LEGEND if by_activity else TRUCK_LEGEND)]
+               + [(t("rtw"), RTW_RGB)])
 
     ts = p.last_progress(trucks)
     tz = p.settings.get("timezone", "UTC")
@@ -158,7 +159,10 @@ def build_gantt_pdf(p: Project, by_activity: bool = False, show_baseline: bool =
         _legend_and_stamp(pdf, p, trucks, by_activity, show_baseline)
     pdf.set_font("Helvetica", "I", 7)
     pdf.set_text_color(*GREY)
-    pdf.cell(pdf.content_w, 4, _txt(f"Generated {_fd(p.today)} ({p.settings.get('timezone', 'UTC')}) from the HCMZ "
-                                    "tracking app. Grey bar = original plan - coloured bar = forecast "
-                                    "(colour = status, label = progress)."), new_x="LMARGIN", new_y="NEXT")
+    pdf.multi_cell(pdf.content_w, 4, _txt(f"Generated {_fd(p.today)} ({p.settings.get('timezone', 'UTC')}) from the "
+                                          "HCMZ tracking app. Grey bar = original plan - coloured bar = forecast "
+                                          "(colour = status, label = progress) - light green = Ready to Work (RTW): "
+                                          f"right after each truck's last activity, {config.RTW_DAYS} working days "
+                                          "(Mon-Fri); a weekend finish extends it to Tuesday."),
+                   new_x="LMARGIN", new_y="NEXT")
     return bytes(pdf.output())

@@ -150,6 +150,36 @@ def test_weekend_affects_work_days(store):
     assert p.truck_row("RD224").work_days == before + 1  # el ensamble del sábado 14-nov ahora cuenta
 
 
+def test_ready_to_work_closes_every_truck(store):
+    p = build_project(store.snapshot(), today=TODAY)
+    tr = p.trucks.set_index("truck")
+    assert tr.rtw_start.notna().all() and tr.rtw_end.notna().all()
+
+    def rtw(truck):
+        return tr.loc[truck, "rtw_start"], tr.loc[truck, "rtw_end"]
+
+    # Camión ya completo: termina el lunes 12-oct → RTW martes y miércoles; no cambia su avance ni su estado
+    assert rtw("RD220") == (date(2026, 10, 13), date(2026, 10, 14))
+    assert tr.loc["RD220", "status"] == "completed" and tr.loc["RD220", "progress"] == 1
+    assert rtw("RD221") == (date(2026, 10, 23), date(2026, 10, 26))  # jueves → viernes a lunes
+    # Pegado a la última actividad; si termina en fin de semana (o viernes) se extiende hasta el martes
+    assert rtw("RD222") == (date(2026, 10, 31), date(2026, 11, 3))  # viernes 30-oct → sábado a martes
+    assert rtw("RD224") == (date(2026, 11, 15), date(2026, 11, 17))  # sábado 14-nov → domingo a martes
+    assert tr.loc["RD224", "end"] == date(2026, 11, 14)  # el plan del camión no cambia
+    # El fin de semana habilitado del camión no se usa para RTW
+    write_event(store, "plan", {"truck": "RD224", "weekend": {"sat": True, "sun": True}, "changes": [], "reason": "x"}, "a")
+    p = build_project(store.snapshot(), today=TODAY)
+    assert tuple(p.truck_row("RD224")[["rtw_start", "rtw_end"]]) == (date(2026, 11, 15), date(2026, 11, 17))
+    # Los festivos sí se saltan
+    write_event(store, "settings", {"values": {"holidays": ["2026-11-16"]}}, "a")
+    p = build_project(store.snapshot(), today=TODAY)
+    assert tuple(p.truck_row("RD224")[["rtw_start", "rtw_end"]]) == (date(2026, 11, 15), date(2026, 11, 18))
+    # Sin fechas no hay RTW
+    write_event(store, "scope", {"op": "add_truck", "truck": "RD240", "acts": [{"act": "trailing_lower"}]}, "a")
+    p = build_project(store.snapshot(), today=TODAY)
+    assert p.truck_row("RD240").rtw_start is None
+
+
 def test_corrupt_event_is_ignored(store):
     store.write("log/task/2026-10/broken.json", b"{not json", "x")
     build_project(store.snapshot(), today=TODAY)

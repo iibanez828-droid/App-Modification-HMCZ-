@@ -1,7 +1,8 @@
 """Gantt interactivo (Plotly): plan original (barra gris delgada) y pronóstico
 (barra de color según el estado), con la línea de hoy. Dos vistas: por
-actividad de cada camión y por camión (ventana completa). La flota original y
-las máquinas en operación (camiones agregados en la app) van en Gantt separados."""
+actividad de cada camión y por camión (ventana completa). Cada camión cierra
+con Ready to Work (RTW, barra verde). La flota original y las máquinas en
+operación (camiones agregados en la app) van en Gantt separados."""
 
 from __future__ import annotations
 
@@ -38,7 +39,7 @@ def gantt_panels(p: Project, t: T, trucks: list[str], mode: str, show_baseline: 
                         config={"displaylogo": False, "modeBarButtonsToRemove": ["select2d", "lasso2d"]})
         if stamp:
             _progress_stamp(p, t, selected)
-    st.caption(t("gantt_help"))
+    st.caption(t("gantt_help", days=config.RTW_DAYS))
 
 
 def _progress_stamp(p: Project, t: T, trucks: list[str]) -> None:
@@ -49,15 +50,39 @@ def _progress_stamp(p: Project, t: T, trucks: list[str]) -> None:
                 f'{esc(t("last_progress", ts=when))}</div>', unsafe_allow_html=True)
 
 
+def _rtw_trace(t: T, tr: pd.DataFrame, labels: list[str], show_baseline: bool) -> go.Bar | None:
+    """Barra verde de Ready to Work (RTW) de cada camión (fila `labels`), después de su última actividad."""
+    df = tr.assign(row=labels)
+    df = df[df.rtw_start.notna() & df.rtw_end.notna()]
+    if df.empty:
+        return None
+    x0 = pd.to_datetime(df.rtw_start)
+    return go.Bar(
+        y=df.row, x=(pd.to_datetime(df.rtw_end) + timedelta(days=1) - x0).dt.days * DAY_MS, base=x0,
+        orientation="h", name=t("rtw"),
+        marker=dict(color=config.RTW_COLOR, line=dict(color="#1A1A1A", width=0.5)),
+        width=0.5, offset=-0.1 if show_baseline else -0.25,
+        text=["RTW"] * len(df), textposition="inside", insidetextanchor="middle",
+        textfont=dict(color="#1A1A1A", size=11),
+        customdata=[[fmt_date(r.rtw_start), fmt_date(r.rtw_end)] for r in df.itertuples()],
+        hovertemplate=("<b>%{y}</b><br>" + t("rtw") + ": %{customdata[0]} → %{customdata[1]}<br>"
+                       + t("rtw_note", days=config.RTW_DAYS) + "<extra></extra>"),
+    )
+
+
 def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True) -> go.Figure:
-    acts = p.activities[p.activities.truck.isin(trucks)].sort_values(["truck", "order"])
-    rows = [f"{r.truck} · {act_name(t, r.act_key)}" for r in acts.itertuples()]
+    acts = p.activities[p.activities.truck.isin(trucks)].sort_values(["truck", "order"]).copy()
+    acts["row"] = [f"{r.truck} · {act_name(t, r.act_key)}" for r in acts.itertuples()]
+    tr = p.trucks[p.trucks.truck.isin(trucks)].sort_values("truck")
+    rtw_rows = [f"{truck} · {t('rtw')}" for truck in tr.truck]
+    # Filas de arriba hacia abajo: las actividades de cada camión y, al final, su RTW
+    rows: list[str] = []
+    for truck, rtw_row in zip(tr.truck, rtw_rows):
+        rows += acts[acts.truck == truck].row.tolist() + [rtw_row]
     fig = go.Figure()
 
     def bars(start_col: str, end_col: str) -> pd.DataFrame:
-        df = acts.copy()
-        df["row"] = rows
-        df = df[df[start_col].notna() & df[end_col].notna()]
+        df = acts[acts[start_col].notna() & acts[end_col].notna()].copy()
         df["x0"] = pd.to_datetime(df[start_col])
         df["dur"] = (pd.to_datetime(df[end_col]) + timedelta(days=1) - df["x0"]).dt.days * DAY_MS
         return df
@@ -87,10 +112,14 @@ def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True
                            "<br>" + t("progress") + ": %{customdata[2]}<br>" + t("delay_wd") + ": %{customdata[3]}<extra></extra>"),
         ))
 
-    # Separadores entre camiones
-    for n in range(1, len(trucks)):
-        count = (acts.truck.isin(trucks[:n])).sum()
-        fig.add_hline(y=count - 0.5, line=dict(color="#DDDDDD", width=1))
+    rtw = _rtw_trace(t, tr, rtw_rows, show_baseline)
+    if rtw is not None:
+        fig.add_trace(rtw)
+
+    # Separadores entre camiones, debajo de cada fila RTW salvo la última. El eje
+    # cuenta las filas desde abajo (categoryarray invertido en _finish).
+    for rtw_row in rtw_rows[:-1]:
+        fig.add_hline(y=len(rows) - rows.index(rtw_row) - 1.5, line=dict(color="#DDDDDD", width=1))
     _finish(fig, p, t, rows)
     return fig
 
@@ -135,6 +164,9 @@ def truck_gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool 
                            "<br>" + t("progress") + ": %{customdata[2]}<br>" + t("delay_wd") + ": %{customdata[3]}"
                            "<br>" + t("own_work_days") + ": %{customdata[4]}<extra></extra>"),
         ))
+    rtw = _rtw_trace(t, tr, rows, show_baseline)  # en la misma fila del camión, después de su pronóstico
+    if rtw is not None:
+        fig.add_trace(rtw)
     _finish(fig, p, t, rows, row_height=40)
     return fig
 

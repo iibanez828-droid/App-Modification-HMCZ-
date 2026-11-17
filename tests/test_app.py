@@ -184,6 +184,31 @@ def test_gantt_pdf(tmp_path, by_activity, show_baseline):
     assert data.startswith(b"%PDF") and len(data) > 10_000
 
 
+def test_gantt_figures_close_each_truck_with_rtw(tmp_path):
+    from datetime import date
+    from core import config
+    from core.events import initialize
+    from core.i18n import translator
+    from core.project import build_project
+    from storage.local_store import LocalStore
+    from ui.gantt import gantt_figure, truck_gantt_figure
+
+    s = LocalStore(tmp_path / "d")
+    initialize(s, "x")
+    p, t = build_project(s.snapshot(), today=date(2026, 10, 25)), translator("en")
+    # Por actividad: RTW es la última fila de cada camión (RD220: 6 actividades, RD224: 8)
+    fig = gantt_figure(p, t, ["RD220", "RD224"])
+    rows = list(reversed(fig.layout.yaxis.categoryarray))
+    assert len(rows) == 16 and rows[6] == "RD220 · Ready to Work (RTW)" and rows[15] == "RD224 · Ready to Work (RTW)"
+    rtw = next(tr for tr in fig.data if tr.name == "Ready to Work (RTW)")
+    assert list(rtw.y) == [rows[6], rows[15]] and rtw.marker.color == config.RTW_COLOR
+    # Separador entre camiones justo debajo del RTW de RD220 (el eje cuenta las filas desde abajo)
+    assert [sh.y0 for sh in fig.layout.shapes if sh.yref == "y"] == [8.5]
+    # Por camión: RTW en la misma fila del camión
+    fig = truck_gantt_figure(p, t, ["RD220", "RD224"])
+    assert list(next(tr for tr in fig.data if tr.name == "Ready to Work (RTW)").y) == ["RD220", "RD224"]
+
+
 def test_admin_truck_gantt_and_no_user_management(at):
     _setup_admin(at)
     assert at.session_state["g_mode"] == "truck"

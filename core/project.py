@@ -14,6 +14,13 @@ Reglas de negocio (todas en este archivo):
 - Grupo: los camiones del plan original del Gantt forman la flota ("fleet");
   los que agrega el administrador en la app son máquinas en operación
   ("operating") y tienen su propio Gantt. Las métricas son las mismas.
+- Ready to Work (RTW): cada camión, también los ya completos, cierra en el
+  Gantt con RTW. Empieza el día siguiente a su última actividad (pronóstico),
+  pegado a ella, y termina al completar `config.RTW_DAYS` días hábiles de
+  lunes a viernes (sin festivos ni los fines de semana habilitados del
+  camión): si termina un viernes, sábado o domingo, RTW se extiende hasta el
+  martes siguiente. Solo se muestra en el Gantt: no cambia las fechas, el
+  avance, el estado ni los atrasos del camión.
 """
 
 from __future__ import annotations
@@ -302,6 +309,7 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
     acts["work_days"] = [truck_cal[r.truck].count(r.fc_start, r.fc_end) for r in acts.itertuples()]
 
     # ── Resumen por camión ──────────────────────────────────────────────
+    rtw_cal = WorkCalendar.build(False, False, holidays)  # RTW: lunes a viernes para todos los camiones
     truck_rows = []
     for truck, g in acts.groupby("truck", sort=True):
         cal = truck_cal[truck]
@@ -334,6 +342,8 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
             status = "future"
         truck_rows.append({
             "truck": truck, "start": start, "end": end, "base_end": base_end,
+            "rtw_start": end + timedelta(days=1) if end else None,  # pegado a la última actividad
+            "rtw_end": rtw_cal.shift(end, config.RTW_DAYS) if end else None,
             "progress": p, "status": status, "work_days": len(days),
             "over_limit": len(days) > max_wd and p < 1,
             "delay_wd": cal.delay(base_end, end) if p < 1 else 0,

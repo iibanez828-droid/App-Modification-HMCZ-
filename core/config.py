@@ -124,3 +124,10 @@ STATUS_COLORS = {
     "future": "#9E9E9E",
     "no_dates": "#6D4C41",
 }
+
+# ─── Ready to Work (RTW) ─────────────────────────────────────────────────
+# Cierre de cada camión en el Gantt: empieza el día siguiente a su última
+# actividad y termina al completar RTW_DAYS días hábiles de lunes a viernes
+# (ver core/project.py). Verde más claro que "completed" para distinguirlos.
+RTW_DAYS = 2
+RTW_COLOR = "#66BB6A"

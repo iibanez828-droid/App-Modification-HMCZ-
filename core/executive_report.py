@@ -21,8 +21,15 @@ LIGHT = (247, 247, 247)
 LINE = (221, 221, 221)
 WHITE = (255, 255, 255)
 BAR_BASE = (214, 214, 214)
-STATUS_RGB = {k: tuple(int(v[i:i + 2], 16) for i in (1, 3, 5)) for k, v in config.STATUS_COLORS.items()}
+
+
+def _rgb(hex_color: str) -> tuple[int, int, int]:
+    return tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
+
+
+STATUS_RGB = {k: _rgb(v) for k, v in config.STATUS_COLORS.items()}
 STATUS_RGB["not_started"] = STATUS_RGB["upcoming"]
+RTW_RGB = _rgb(config.RTW_COLOR)
 
 PAGE_W, MARGIN = 210, 12
 CONTENT_W = PAGE_W - 2 * MARGIN
@@ -144,6 +151,34 @@ class _Report(FPDF):
         self.set_text_color(*BLACK)
         self.cell(12, 7, f"{value * 100:.0f}%", align="R")
 
+    def rtw_bar(self, x: float, y: float, w: float, h: float, size: float = 6) -> None:
+        """Barra verde de Ready to Work (RTW); lleva el texto "RTW" si cabe."""
+        self.set_fill_color(*RTW_RGB)
+        self.rect(x, y, w, h, "F")
+        if w > 6:
+            self.set_xy(x, y)
+            self.set_font("Helvetica", "B", size)
+            self.set_text_color(*BLACK)
+            self.cell(w, h, "RTW", align="C")
+
+    def legend(self, items: list[tuple[str, tuple]]) -> None:
+        """Leyenda del Gantt en una línea, en la posición actual: muestras de color y la línea de hoy.
+        Cada elemento ocupa el ancho de su texto, para que quepa también en la hoja vertical."""
+        y, x = self.get_y(), MARGIN
+        self.set_font("Helvetica", "", 6.5)
+        self.set_text_color(*GREY)
+        for label, rgb in items:
+            label = _txt(label)
+            self.set_fill_color(*rgb)
+            self.rect(x, y + 1.2, 3, 2, "F")
+            self.set_xy(x + 4, y)
+            self.cell(self.get_string_width(label) + 1, 4.5, label)
+            x += self.get_string_width(label) + 10
+        self.set_fill_color(*ORANGE)
+        self.rect(x, y + 2, 3, 0.5, "F")
+        self.set_xy(x + 4, y)
+        self.cell(20, 4.5, "Today")
+
 
 # ─── Contenido ────────────────────────────────────────────────────────────
 def _summary_text(p: Project) -> list[str]:
@@ -223,7 +258,8 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
     tr = p.trucks[p.trucks.truck.isin(trucks)].sort_values("truck")
     acts = p.activities[p.activities.truck.isin(trucks)]
     base_start = acts.groupby("truck").base_start.agg(lambda s: min((d for d in s if d), default=None))
-    dates = [d for col in ("start", "end", "base_end") for d in tr[col] if d] + [d for d in base_start if d] + [p.today]
+    dates = ([d for col in ("start", "end", "base_end", "rtw_end") for d in tr[col] if d]
+             + [d for d in base_start if d] + [p.today])
     lo, hi = min(dates) - timedelta(days=2), max(dates) + timedelta(days=3)
     span = max((hi - lo).days, 1)
     label_w, row_h = 16, 6.2
@@ -262,6 +298,8 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
             if bw > 9:
                 pdf.set_xy(bx, y + 2.4)
                 pdf.cell(bw, 3.2, f"{r.progress * 100:.0f}%", align="C")
+        if r.rtw_start and r.rtw_end:
+            pdf.rtw_bar(xpos(r.rtw_start), y + 2.4, xpos(r.rtw_end + timedelta(days=1)) - xpos(r.rtw_start), 3.2)
     xt = xpos(p.today)
     pdf.set_draw_color(*ORANGE)
     pdf.set_line_width(0.5)
@@ -271,21 +309,9 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
     pdf.set_line_width(0.2)
     y = top + row_h * len(tr) + 2
     pdf.set_xy(MARGIN, y)
-    pdf.set_font("Helvetica", "", 6.5)
-    pdf.set_text_color(*GREY)
-    legend = [("Original plan", BAR_BASE)] + [(t("st_" + s), STATUS_RGB[s])
-                                             for s in ("completed", "in_progress", "overdue", "upcoming", "future")]
-    x = MARGIN
-    for label, rgb in legend:
-        pdf.set_fill_color(*rgb)
-        pdf.rect(x, y + 1.2, 3, 2, "F")
-        pdf.set_xy(x + 4, y)
-        pdf.cell(22, 4.5, label)
-        x += 26
-    pdf.set_fill_color(*ORANGE)
-    pdf.rect(x, y + 2, 3, 0.5, "F")
-    pdf.set_xy(x + 4, y)
-    pdf.cell(20, 4.5, "Today")
+    pdf.legend([("Original plan", BAR_BASE)]
+               + [(t("st_" + s), STATUS_RGB[s]) for s in ("completed", "in_progress", "overdue", "upcoming", "future")]
+               + [(t("rtw"), RTW_RGB)])
     pdf.set_y(y + 7)
 
 

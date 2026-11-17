@@ -216,9 +216,14 @@ TEXTS: dict[str, tuple[str, str]] = {
     "no_operating_trucks": ("No operating machines yet. Trucks added by the administrator appear here.",
                             "稼働機械はまだありません。管理者が追加した車両がここに表示されます。"),
     "select_trucks": ("Select at least one truck.", "車両を1台以上選択してください。"),
-    "gantt_help": ("Grey bar = original plan · coloured bar = forecast (colour = status, label = progress). "
-                   "Zoom by dragging; double-click to reset.",
-                   "灰色＝当初計画 · 色付き＝予測（色＝状態、数値＝進捗）。ドラッグで拡大、ダブルクリックで元に戻ります。"),
+    "gantt_help": ("Grey bar = original plan · coloured bar = forecast (colour = status, label = progress) · "
+                   "light green = Ready to Work (RTW): right after each truck's last activity, {days} working days "
+                   "(Mon–Fri); a weekend finish extends it to Tuesday. Zoom by dragging; double-click to reset.",
+                   "灰色＝当初計画 · 色付き＝予測（色＝状態、数値＝進捗） · 薄い緑＝稼働準備（RTW）：各車両の最終作業の直後から "
+                   "{days} 稼働日（月〜金）、週末に終了した場合は火曜日まで。ドラッグで拡大、ダブルクリックで元に戻ります。"),
+    "rtw": ("Ready to Work (RTW)", "稼働準備（RTW）"),
+    "rtw_note": ("Right after the last activity · {days} working days (Mon–Fri)",
+                 "最終作業の直後から {days} 稼働日（月〜金）"),
     "last_progress": ("Last progress update: {ts}", "最終進捗更新：{ts}"),
     "download_gantt_pdf": ("Print Gantt (PDF)", "ガントを印刷（PDF）"),
     "download_gantt_help": ("A4 landscape PDF of the Gantt shown on screen (same view and original plan option). "
