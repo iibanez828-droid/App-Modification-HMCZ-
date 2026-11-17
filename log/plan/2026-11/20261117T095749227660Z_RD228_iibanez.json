@@ -1,0 +1,33 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-17T09:57:49.227660+00:00",
+ "user": "iibanez",
+ "truck": "RD228",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "assigned_to": ""
+  },
+  {
+   "act": "trunnion_cap",
+   "assigned_to": ""
+  },
+  {
+   "act": "trunnion_mod",
+   "assigned_to": ""
+  },
+  {
+   "act": "high_arch",
+   "assigned_to": ""
+  },
+  {
+   "act": "nose_cone",
+   "assigned_to": ""
+  },
+  {
+   "act": "lhs_seat",
+   "assigned_to": ""
+  }
+ ],
+ "reason": "UPdate"
+}
