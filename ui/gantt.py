@@ -2,7 +2,8 @@
 (barra de color según el estado), con la línea de hoy. Dos vistas: por
 actividad de cada camión y por camión (ventana completa). Cada camión cierra
 con Ready to Work (RTW, barra verde); los que requieren reemplazo de motor
-llevan una bandera roja (Engine Service) al final de su RTW. La flota original y las máquinas en
+llevan una bandera roja (Engine Service) al final de su RTW, y el tramo en que
+un camión volvió temporalmente a operación se pinta de morado. La flota original y las máquinas en
 operación (camiones agregados en la app) van en Gantt separados."""
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from core import config
-from core.project import Project
+from core.project import Project, operation_periods, split_periods
 from ui.common import T, act_name, esc, fmt_date, fmt_pct, fmt_ts, note, section
 
 DAY_MS = 86_400_000
@@ -40,7 +41,7 @@ def gantt_panels(p: Project, t: T, trucks: list[str], mode: str, show_baseline: 
                         config={"displaylogo": False, "modeBarButtonsToRemove": ["select2d", "lasso2d"]})
         if stamp:
             _progress_stamp(p, t, selected)
-    st.caption(t("gantt_help", days=config.RTW_DAYS) + " · 🚩 " + t("engine_flag"))
+    st.caption(t("gantt_help", days=config.RTW_DAYS) + " · " + t("op_legend") + " · 🚩 " + t("engine_flag"))
 
 
 def _progress_stamp(p: Project, t: T, trucks: list[str]) -> None:
@@ -68,6 +69,40 @@ def _rtw_trace(t: T, tr: pd.DataFrame, labels: list[str], show_baseline: bool) -
         customdata=[[fmt_date(r.rtw_start), fmt_date(r.rtw_end)] for r in df.itertuples()],
         hovertemplate=("<b>%{y}</b><br>" + t("rtw") + ": %{customdata[0]} → %{customdata[1]}<br>"
                        + t("rtw_note", days=config.RTW_DAYS) + "<extra></extra>"),
+    )
+
+
+def _split_bars(df: pd.DataFrame, start_col: str, end_col: str, ycol: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Barras del pronóstico partidas por los tramos en que el camión volvió a operación.
+    Devuelve los tramos de trabajo (el % va en el más largo) y los tramos en operación."""
+    cols = [c for c in df.columns if c not in ("x0", "dur", "label")]
+    pieces, gaps = [], []
+    for _, r in df.iterrows():
+        segs, ops = split_periods(r[start_col], r[end_col], operation_periods(r["truck"]))
+        longest = max(segs, key=lambda se: (se[1] - se[0]).days, default=None)
+        for a, b in segs:
+            pieces.append({**{c: r[c] for c in cols}, "x0": pd.Timestamp(a), "dur": ((b - a).days + 1) * DAY_MS,
+                           "label": fmt_pct(r["progress"]) if (a, b) == longest else ""})
+        for a, b in ops:
+            gaps.append({"y": r[ycol], "x0": pd.Timestamp(a), "dur": ((b - a).days + 1) * DAY_MS, "s": a, "e": b})
+    return (pd.DataFrame(pieces, columns=cols + ["x0", "dur", "label"]),
+            pd.DataFrame(gaps, columns=["y", "x0", "dur", "s", "e"]))
+
+
+def _operation_trace(t: T, gaps: pd.DataFrame, show_baseline: bool, size: int) -> go.Bar | None:
+    """Tramo morado "Returned to operation" dentro de la barra del pronóstico."""
+    if gaps.empty:
+        return None
+    return go.Bar(
+        y=gaps.y, x=gaps.dur, base=gaps.x0, orientation="h", name=t("op_period"),
+        marker=dict(color=config.OPERATION_COLOR, line=dict(color="#1A1A1A", width=0.5)),
+        width=0.5, offset=-0.1 if show_baseline else -0.25,
+        text=[t("op_period")] * len(gaps), textposition="inside", insidetextanchor="middle",
+        textfont=dict(color="white", size=size),
+        customdata=[[fmt_date(r.s), fmt_date(r.e)] for r in gaps.itertuples()],
+        hovertemplate=[("<b>%{y}</b><br>" + t("op_period") + ": %{customdata[0]} → %{customdata[1]}<br>"
+                        + t("op_note", date=fmt_date(r.e + timedelta(days=1))) + "<extra></extra>")
+                       for r in gaps.itertuples()],
     )
 
 
@@ -101,10 +136,20 @@ def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True
     acts["row"] = [f"{r.truck} · {act_name(t, r.act_key)}" for r in acts.itertuples()]
     tr = p.trucks[p.trucks.truck.isin(trucks)].sort_values("truck")
     rtw_rows = [f"{truck} · {t('rtw')}" for truck in tr.truck]
-    # Filas de arriba hacia abajo: las actividades de cada camión y, al final, su RTW
+    # Filas de arriba hacia abajo: las actividades de cada camión, su tramo en operación (si lo tiene) y su RTW
     rows: list[str] = []
-    for truck, rtw_row in zip(tr.truck, rtw_rows):
-        rows += acts[acts.truck == truck].row.tolist() + [rtw_row]
+    gaps = []
+    for r, rtw_row in zip(tr.itertuples(), rtw_rows):
+        rows += acts[acts.truck == r.truck].row.tolist()
+        periods = operation_periods(r.truck)
+        if periods:
+            op_row = f"{r.truck} · {t('op_period')}"
+            rows.append(op_row)
+            ops = split_periods(r.start, r.end, periods)[1] if r.start and r.end else periods
+            gaps += [{"y": op_row, "x0": pd.Timestamp(a), "dur": ((b - a).days + 1) * DAY_MS, "s": a, "e": b}
+                     for a, b in ops]
+        rows.append(rtw_row)
+    gaps = pd.DataFrame(gaps, columns=["y", "x0", "dur", "s", "e"])
     fig = go.Figure()
 
     def bars(start_col: str, end_col: str) -> pd.DataFrame:
@@ -138,6 +183,9 @@ def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True
                            "<br>" + t("progress") + ": %{customdata[2]}<br>" + t("delay_wd") + ": %{customdata[3]}<extra></extra>"),
         ))
 
+    op = _operation_trace(t, gaps, show_baseline, 11)  # fila propia, sin tapar las actividades
+    if op is not None:
+        fig.add_trace(op)
     rtw = _rtw_trace(t, tr, rtw_rows, show_baseline)
     if rtw is not None:
         fig.add_trace(rtw)
@@ -174,7 +222,7 @@ def truck_gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool 
             customdata=[[fmt_date(r.base_start), fmt_date(r.base_end)] for r in b.itertuples()],
             hovertemplate="<b>%{y}</b><br>" + t("original_plan") + ": %{customdata[0]} → %{customdata[1]}<extra></extra>",
         ))
-    f = bars("start", "end")
+    f, gaps = _split_bars(tr[tr.start.notna() & tr.end.notna()], "start", "end", "truck")
     for status, color in config.STATUS_COLORS.items():
         g = f[f.status == status]
         if g.empty:
@@ -183,7 +231,7 @@ def truck_gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool 
             y=g.truck, x=g.dur, base=g.x0, orientation="h", name=t("st_" + status),
             marker=dict(color=color, line=dict(color="#1A1A1A", width=0.5)),
             width=0.5, offset=-0.1 if show_baseline else -0.25,
-            text=[fmt_pct(v) for v in g.progress], textposition="inside", insidetextanchor="middle",
+            text=g.label, textposition="inside", insidetextanchor="middle",
             textfont=dict(color="white", size=12),
             customdata=[[fmt_date(r.start), fmt_date(r.end), fmt_pct(r.progress), f"{r.delay_wd:+d}", r.work_days]
                         for r in g.itertuples()],
@@ -191,6 +239,9 @@ def truck_gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool 
                            "<br>" + t("progress") + ": %{customdata[2]}<br>" + t("delay_wd") + ": %{customdata[3]}"
                            "<br>" + t("own_work_days") + ": %{customdata[4]}<extra></extra>"),
         ))
+    op = _operation_trace(t, gaps, show_baseline, 11)
+    if op is not None:
+        fig.add_trace(op)
     rtw = _rtw_trace(t, tr, rows, show_baseline)  # en la misma fila del camión, después de su pronóstico
     if rtw is not None:
         fig.add_trace(rtw)

@@ -138,3 +138,13 @@ RTW_COLOR = "#66BB6A"
 # cambia fechas, avance ni estado).
 ENGINE_SERVICE_TRUCKS: tuple[str, ...] = ("RD225", "RD226")
 ENGINE_FLAG_COLOR = "#C62828"
+
+# ─── Camiones devueltos temporalmente a operación ────────────────────────
+# Tramos (inicio, fin, ambos incluidos) en que el camión sale a trabajar y la
+# modificación se pausa; se retoma al día siguiente del fin. En el Gantt ese
+# tramo de la barra se pinta de otro color con la etiqueta "Returned to
+# operation" (solo visual: no cambia fechas, avance ni estado).
+OPERATION_PERIODS: dict[str, tuple[tuple[str, str], ...]] = {
+    "RD228": (("2026-11-16", "2026-11-27"),),  # en operación desde el 16-nov; vuelve el 28-nov
+}
+OPERATION_COLOR = "#7E57C2"

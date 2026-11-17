@@ -10,7 +10,7 @@ from fpdf import FPDF
 
 from core import config
 from core.i18n import translator
-from core.project import VISIBLE_STATUSES, Project
+from core.project import VISIBLE_STATUSES, Project, split_periods
 
 t = translator("en")
 
@@ -31,6 +31,7 @@ STATUS_RGB = {k: _rgb(v) for k, v in config.STATUS_COLORS.items()}
 STATUS_RGB["not_started"] = STATUS_RGB["upcoming"]
 RTW_RGB = _rgb(config.RTW_COLOR)
 ENGINE_RGB = _rgb(config.ENGINE_FLAG_COLOR)
+OP_RGB = _rgb(config.OPERATION_COLOR)
 ENGINE_PAD_DAYS = 12  # días extra a la derecha de la escala para el texto de la bandera
 
 PAGE_W, MARGIN = 210, 12
@@ -163,6 +164,23 @@ class _Report(FPDF):
             self.set_text_color(*BLACK)
             self.cell(w, h, "RTW", align="C")
 
+    def forecast_bar(self, xpos, start: date, end: date, periods: list, y: float, h: float, rgb: tuple,
+                     label: str, size: float, min_label_w: float) -> None:
+        """Barra del pronóstico partida por los tramos en que el camión volvió a operación (en morado,
+        con "Returned to operation" si cabe). El % va en el tramo de trabajo más largo."""
+        segs, ops = split_periods(start, end, periods)
+        longest = max(segs, key=lambda se: (se[1] - se[0]).days, default=None)
+        self.set_font("Helvetica", "B", size)
+        for (a, b), fill, text in ([(se, rgb, label if se == longest else "") for se in segs]
+                                   + [(se, OP_RGB, "Returned to operation") for se in ops]):
+            x, w = xpos(a), xpos(b + timedelta(days=1)) - xpos(a)
+            self.set_fill_color(*fill)
+            self.rect(x, y, w, h, "F")
+            if text and w > min_label_w and self.get_string_width(text) < w - 1:
+                self.set_xy(x, y)
+                self.set_text_color(*WHITE)
+                self.cell(w, h, text, align="C")
+
     def engine_flag(self, x: float, y: float, h: float, size: float = 6) -> None:
         """Bandera roja de reemplazo de motor (Engine Service) en x, en una fila de alto h que empieza en y."""
         self.set_draw_color(*BLACK)
@@ -176,23 +194,29 @@ class _Report(FPDF):
         self.set_text_color(*ENGINE_RGB)
         self.cell(self.get_string_width("Engine Service") + 1, h * 0.6, "Engine Service")
 
-    def legend(self, items: list[tuple[str, tuple]]) -> None:
+    def legend(self, items: list[tuple[str, tuple]]) -> int:
         """Leyenda del Gantt en una línea, en la posición actual: muestras de color y la línea de hoy.
-        Cada elemento ocupa el ancho de su texto, para que quepa también en la hoja vertical."""
-        y, x = self.get_y(), MARGIN
+        Cada elemento ocupa el ancho de su texto; si no cabe en la línea, pasa a la siguiente.
+        Devuelve el número de líneas usadas."""
+        y, x, lines = self.get_y(), MARGIN, 1
+        right = self.w - MARGIN
         self.set_font("Helvetica", "", 6.5)
         self.set_text_color(*GREY)
-        for label, rgb in items:
-            label = _txt(label)
+        for label, rgb in [(_txt(lbl), rgb) for lbl, rgb in items] + [("Today", None)]:
+            if x + 4 + self.get_string_width(label) > right:
+                x, y, lines = MARGIN, y + 4.5, lines + 1
+            if rgb is None:  # línea de hoy
+                self.set_fill_color(*ORANGE)
+                self.rect(x, y + 2, 3, 0.5, "F")
+                self.set_xy(x + 4, y)
+                self.cell(20, 4.5, label)
+                break
             self.set_fill_color(*rgb)
             self.rect(x, y + 1.2, 3, 2, "F")
             self.set_xy(x + 4, y)
             self.cell(self.get_string_width(label) + 1, 4.5, label)
             x += self.get_string_width(label) + 10
-        self.set_fill_color(*ORANGE)
-        self.rect(x, y + 2, 3, 0.5, "F")
-        self.set_xy(x + 4, y)
-        self.cell(20, 4.5, "Today")
+        return lines
 
 
 # ─── Contenido ────────────────────────────────────────────────────────────
@@ -306,14 +330,8 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
             pdf.set_fill_color(*BAR_BASE)
             pdf.rect(xpos(bs), y + 0.6, xpos(r.base_end + timedelta(days=1)) - xpos(bs), 1.4, "F")
         if r.start and r.end:
-            bx, bw = xpos(r.start), xpos(r.end + timedelta(days=1)) - xpos(r.start)
-            pdf.set_fill_color(*STATUS_RGB.get(r.status, GREY))
-            pdf.rect(bx, y + 2.4, bw, 3.2, "F")
-            pdf.set_font("Helvetica", "B", 6)
-            pdf.set_text_color(*WHITE)
-            if bw > 9:
-                pdf.set_xy(bx, y + 2.4)
-                pdf.cell(bw, 3.2, f"{r.progress * 100:.0f}%", align="C")
+            pdf.forecast_bar(xpos, r.start, r.end, r.operation, y + 2.4, 3.2, STATUS_RGB.get(r.status, GREY),
+                             f"{r.progress * 100:.0f}%", 6, 9)
         if r.rtw_start and r.rtw_end:
             pdf.rtw_bar(xpos(r.rtw_start), y + 2.4, xpos(r.rtw_end + timedelta(days=1)) - xpos(r.rtw_start), 3.2)
             if r.engine_service:
@@ -327,11 +345,12 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
     pdf.set_line_width(0.2)
     y = top + row_h * len(tr) + 2
     pdf.set_xy(MARGIN, y)
-    pdf.legend([("Original plan", BAR_BASE)]
+    lines = pdf.legend([("Original plan", BAR_BASE)]
                + [(t("st_" + s), STATUS_RGB[s]) for s in ("completed", "in_progress", "overdue", "upcoming", "future")]
                + [(t("rtw"), RTW_RGB)]
+               + ([(t("op_period"), OP_RGB)] if tr.operation.map(bool).any() else [])
                + ([(t("engine_short"), ENGINE_RGB)] if tr.engine_service.any() else []))
-    pdf.set_y(y + 7)
+    pdf.set_y(y + 7 + 4.5 * (lines - 1))
 
 
 def _plan_activities(p: Project) -> list[config.Activity]:

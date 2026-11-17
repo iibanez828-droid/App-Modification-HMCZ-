@@ -10,9 +10,10 @@ from datetime import date, timedelta
 import pandas as pd
 
 from core import config
-from core.executive_report import (BAR_BASE, BLACK, GREY, LINE, MARGIN, ENGINE_PAD_DAYS, ENGINE_RGB, ORANGE, RTW_RGB, STATUS_RGB, WHITE, _fd,
+from core.executive_report import (BAR_BASE, BLACK, ENGINE_PAD_DAYS, ENGINE_RGB, GREY, LINE, MARGIN, OP_RGB, ORANGE,
+                                   RTW_RGB, STATUS_RGB, _fd,
                                    _Report, _txt, t)
-from core.project import Project
+from core.project import Project, split_periods
 
 STAMP = (165, 165, 165)  # gris claro del sello "último avance"
 GROUPS = (("fleet", "Gantt truck modification"), ("operating", "Gantt operating machine"))
@@ -33,15 +34,23 @@ def _rows(p: Project, trucks: list[str], by_activity: bool) -> list[dict]:
                 name = (act.name or t(f"act_{r.act_key}")) + (" (ext.)" if r.external else "")
                 out.append({"truck": r.truck, "label": name, "start": r.fc_start, "end": r.fc_end,
                             "base_start": r.base_start, "base_end": r.base_end, "status": r.status,
-                            "progress": r.progress, "rtw_start": None, "rtw_end": None, "engine": False})
+                            "progress": r.progress, "rtw_start": None, "rtw_end": None, "engine": False,
+                            "operation": []})
+            if tk.operation:  # fila propia para el tramo en operación, sin tapar las actividades
+                ops = split_periods(tk.start, tk.end, tk.operation)[1] if tk.start and tk.end else tk.operation
+                out += [{"truck": tk.truck, "label": t("op_period"), "start": a, "end": b, "base_start": None,
+                         "base_end": None, "status": "operation", "progress": 0.0, "rtw_start": None,
+                         "rtw_end": None, "engine": False, "operation": [(a, b)]} for a, b in ops]
             out.append({"truck": tk.truck, "label": t("rtw"), "start": None, "end": None, "base_start": None,
                         "base_end": None, "status": "rtw", "progress": 0.0,
-                        "rtw_start": tk.rtw_start, "rtw_end": tk.rtw_end, "engine": tk.engine_service})
+                        "rtw_start": tk.rtw_start, "rtw_end": tk.rtw_end, "engine": tk.engine_service,
+                        "operation": []})
         return out
     base_start = acts.groupby("truck").base_start.agg(lambda s: min((d for d in s if d), default=None))
     return [{"truck": r.truck, "label": r.truck, "start": r.start, "end": r.end, "base_start": base_start.get(r.truck),
              "base_end": r.base_end, "status": r.status, "progress": r.progress,
-             "rtw_start": r.rtw_start, "rtw_end": r.rtw_end, "engine": r.engine_service}
+             "rtw_start": r.rtw_start, "rtw_end": r.rtw_end, "engine": r.engine_service,
+             "operation": r.operation}
             for r in tr.itertuples()]
 
 
@@ -55,7 +64,7 @@ def _chart(pdf: _Report, p: Project, rows: list[dict], by_activity: bool, show_b
     row_h = 5 if by_activity else 7
     x0 = MARGIN + truck_w + label_w
     w = pdf.content_w - truck_w - label_w
-    bottom = pdf.h - 24  # deja lugar para la leyenda y el sello al pie
+    bottom = pdf.h - 27  # deja lugar para la leyenda y el sello al pie
 
     def xpos(d: date) -> float:
         return x0 + w * (d - lo).days / span
@@ -112,14 +121,8 @@ def _chart(pdf: _Report, p: Project, rows: list[dict], by_activity: bool, show_b
         by, bh = y + row_h * (0.38 if show_baseline else 0.2), row_h * (0.5 if show_baseline else 0.6)
         size = 5.5 if by_activity else 6.5
         if r["start"] and r["end"]:
-            bx, bw = xpos(r["start"]), xpos(r["end"] + timedelta(days=1)) - xpos(r["start"])
-            pdf.set_fill_color(*STATUS_RGB.get(r["status"], GREY))
-            pdf.rect(bx, by, bw, bh, "F")
-            if bw > 8:
-                pdf.set_xy(bx, by)
-                pdf.set_font("Helvetica", "B", size)
-                pdf.set_text_color(*WHITE)
-                pdf.cell(bw, bh, f"{r['progress'] * 100:.0f}%", align="C")
+            pdf.forecast_bar(xpos, r["start"], r["end"], r["operation"], by, bh, STATUS_RGB.get(r["status"], GREY),
+                             f"{r['progress'] * 100:.0f}%", size, 8)
         if r["rtw_start"] and r["rtw_end"]:
             pdf.rtw_bar(xpos(r["rtw_start"]), by, xpos(r["rtw_end"] + timedelta(days=1)) - xpos(r["rtw_start"]), bh,
                         size)
@@ -133,19 +136,20 @@ def _chart(pdf: _Report, p: Project, rows: list[dict], by_activity: bool, show_b
 def _legend_and_stamp(pdf: _Report, p: Project, trucks: list[str], by_activity: bool, show_baseline: bool) -> None:
     """Leyenda a la izquierda y, en gris claro abajo a la derecha, la fecha-hora del último registro de avance."""
     y = pdf.get_y()
-    pdf.legend(([("Original plan", BAR_BASE)] if show_baseline else [])
+    lines = pdf.legend(([("Original plan", BAR_BASE)] if show_baseline else [])
                + [(t("st_" + s), STATUS_RGB[s]) for s in (ACTIVITY_LEGEND if by_activity else TRUCK_LEGEND)]
                + [(t("rtw"), RTW_RGB)]
+               + ([(t("op_period"), OP_RGB)] if p.trucks[p.trucks.truck.isin(trucks)].operation.map(bool).any() else [])
                + ([(t("engine_short"), ENGINE_RGB)] if p.trucks[p.trucks.truck.isin(trucks)].engine_service.any() else []))
 
     ts = p.last_progress(trucks)
     tz = p.settings.get("timezone", "UTC")
     when = f"{pd.Timestamp(ts).tz_convert(tz):%d-%b-%Y %H:%M} ({tz})" if ts else "no records yet"
-    pdf.set_xy(MARGIN, y)
+    pdf.set_xy(MARGIN, y + 4.5 * lines)  # en su propia línea, debajo de la leyenda
     pdf.set_font("Helvetica", "I", 7)
     pdf.set_text_color(*STAMP)
     pdf.cell(pdf.content_w, 4.5, _txt(f"Last progress update: {when}"), align="R")
-    pdf.set_y(y + 8)
+    pdf.set_y(y + 6.5 + 4.5 * lines)
 
 
 def build_gantt_pdf(p: Project, by_activity: bool = False, show_baseline: bool = True) -> bytes:
@@ -167,7 +171,8 @@ def build_gantt_pdf(p: Project, by_activity: bool = False, show_baseline: bool =
                                           "HCMZ tracking app. Grey bar = original plan - coloured bar = forecast "
                                           "(colour = status, label = progress) - light green = Ready to Work (RTW): "
                                           f"right after each truck's last activity, {config.RTW_DAYS} working days "
-                                          "(Mon-Fri); a weekend finish extends it to Tuesday. Red flag = engine replacement "
+                                          "(Mon-Fri); a weekend finish extends it to Tuesday. Purple = truck temporarily returned "
+                                          "to operation (modification paused). Red flag = engine replacement "
                                           "required (Engine Service)."),
                    new_x="LMARGIN", new_y="NEXT")
     return bytes(pdf.output())

@@ -237,6 +237,48 @@ def test_engine_service_flag_after_rtw(tmp_path):
     assert build_gantt_pdf(p).startswith(b"%PDF") and build_gantt_pdf(p, by_activity=True).startswith(b"%PDF")
 
 
+def test_returned_to_operation_splits_the_bar(tmp_path):
+    from datetime import date
+    import pandas as pd
+    from core import config
+    from core.events import initialize
+    from core.executive_report import build_executive_pdf
+    from core.gantt_report import build_gantt_pdf
+    from core.i18n import translator
+    from core.project import build_project, split_periods
+    from storage.local_store import LocalStore
+    from ui.gantt import gantt_figure, truck_gantt_figure
+
+    d = date
+    # Partición: tramos de trabajo antes y después, tramo en operación recortado a la barra
+    assert split_periods(d(2026, 10, 28), d(2026, 12, 7), [(d(2026, 11, 16), d(2026, 11, 27))]) == (
+        [(d(2026, 10, 28), d(2026, 11, 15)), (d(2026, 11, 28), d(2026, 12, 7))], [(d(2026, 11, 16), d(2026, 11, 27))])
+    assert split_periods(d(2026, 11, 20), d(2026, 12, 1), [(d(2026, 11, 16), d(2026, 11, 27))]) == (
+        [(d(2026, 11, 28), d(2026, 12, 1))], [(d(2026, 11, 20), d(2026, 11, 27))])
+    assert split_periods(d(2026, 10, 1), d(2026, 10, 5), [(d(2026, 11, 16), d(2026, 11, 27))]) == (
+        [(d(2026, 10, 1), d(2026, 10, 5))], [])
+
+    s = LocalStore(tmp_path / "d")
+    initialize(s, "x")
+    p, t = build_project(s.snapshot(), today=d(2026, 11, 17)), translator("en")
+    assert config.OPERATION_PERIODS["RD228"] == (("2026-11-16", "2026-11-27"),)
+    fig = truck_gantt_figure(p, t, ["RD227", "RD228"])
+    op = next(x for x in fig.data if x.name == t("op_period"))
+    assert list(op.y) == ["RD228"] and op.marker.color == config.OPERATION_COLOR
+    assert pd.Timestamp(op.base[0]).date() == d(2026, 11, 16) and op.x[0] == 12 * 86_400_000
+    # La barra de RD228 queda en dos tramos y el % aparece una sola vez
+    labels = [lbl for x in fig.data if x.type == "bar" and x.name not in (t("op_period"), t("rtw"), t("original_plan"))
+              for y, lbl in zip(x.y, x.text) if y == "RD228"]
+    assert len(labels) == 2 and sum(bool(lbl) for lbl in labels) == 1
+    assert not any(x.name == t("op_period") for x in truck_gantt_figure(p, t, ["RD227"]).data)
+    # Por actividad: fila propia antes del RTW; las barras de las actividades no se tapan
+    fig = gantt_figure(p, t, ["RD228"])
+    rows = list(reversed(fig.layout.yaxis.categoryarray))
+    assert rows[-2:] == ["RD228 · Returned to operation", "RD228 · Ready to Work (RTW)"]
+    assert list(next(x for x in fig.data if x.name == t("op_period")).y) == ["RD228 · Returned to operation"]
+    assert build_gantt_pdf(p, by_activity=True).startswith(b"%PDF") and build_executive_pdf(p).startswith(b"%PDF")
+
+
 def test_admin_truck_gantt_and_no_user_management(at):
     _setup_admin(at)
     assert at.session_state["g_mode"] == "truck"

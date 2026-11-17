@@ -21,6 +21,9 @@ Reglas de negocio (todas en este archivo):
   camión): si termina un viernes, sábado o domingo, RTW se extiende hasta el
   martes siguiente. Solo se muestra en el Gantt: no cambia las fechas, el
   avance, el estado ni los atrasos del camión.
+- Returned to operation: `config.OPERATION_PERIODS` marca los tramos en que
+  un camión vuelve temporalmente a operación. El Gantt pinta ese tramo de la
+  barra de otro color (`split_periods`). Solo visual.
 - Engine Service: los camiones de `config.ENGINE_SERVICE_TRUCKS` llevan una
   bandera roja al final de su RTW (requieren reemplazo de motor). Solo visual.
 """
@@ -122,6 +125,25 @@ class Project:
                 out.append({"type": "non_workday", "truck": tr.truck, "act": a.act_key, "end": a.fc_end})
         order = {"trunnion": 0, "missing_dates": 1, "overdue": 2, "act_overdue": 3, "non_workday": 4, "over_limit": 5}
         return sorted(out, key=lambda a: order[a["type"]])
+
+
+def operation_periods(truck: str) -> list[tuple[date, date]]:
+    """Tramos en que el camión volvió temporalmente a operación (config.OPERATION_PERIODS)."""
+    return [(date.fromisoformat(a), date.fromisoformat(b)) for a, b in config.OPERATION_PERIODS.get(truck, ())]
+
+
+def split_periods(start: date, end: date, periods: list[tuple[date, date]]
+                  ) -> tuple[list[tuple[date, date]], list[tuple[date, date]]]:
+    """Divide la barra start→end (días incluidos) en tramos de trabajo y tramos en operación (recortados a la barra)."""
+    gaps = sorted((max(a, start), min(b, end)) for a, b in periods if a <= end and b >= start)
+    pieces, cur = [], start
+    for a, b in gaps:
+        if a > cur:
+            pieces.append((cur, a - timedelta(days=1)))
+        cur = max(cur, b + timedelta(days=1))
+    if cur <= end:
+        pieces.append((cur, end))
+    return pieces, gaps
 
 
 def today_in(settings: dict) -> date:
@@ -347,6 +369,7 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
             "rtw_start": end + timedelta(days=1) if end else None,  # pegado a la última actividad
             "rtw_end": rtw_cal.shift(end, config.RTW_DAYS) if end else None,
             "engine_service": truck in config.ENGINE_SERVICE_TRUCKS,  # bandera roja al final de RTW
+            "operation": operation_periods(truck),  # tramos devuelto a operación (solo visual)
             "progress": p, "status": status, "work_days": len(days),
             "over_limit": len(days) > max_wd and p < 1,
             "delay_wd": cal.delay(base_end, end) if p < 1 else 0,
