@@ -21,6 +21,8 @@ Reglas de negocio (todas en este archivo):
   camión): si termina un viernes, sábado o domingo, RTW se extiende hasta el
   martes siguiente. Solo se muestra en el Gantt: no cambia las fechas, el
   avance, el estado ni los atrasos del camión.
+- Engine Service: los camiones de `config.ENGINE_SERVICE_TRUCKS` llevan una
+  bandera roja al final de su RTW (requieren reemplazo de motor). Solo visual.
 """
 
 from __future__ import annotations
@@ -344,6 +346,7 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
             "truck": truck, "start": start, "end": end, "base_end": base_end,
             "rtw_start": end + timedelta(days=1) if end else None,  # pegado a la última actividad
             "rtw_end": rtw_cal.shift(end, config.RTW_DAYS) if end else None,
+            "engine_service": truck in config.ENGINE_SERVICE_TRUCKS,  # bandera roja al final de RTW
             "progress": p, "status": status, "work_days": len(days),
             "over_limit": len(days) > max_wd and p < 1,
             "delay_wd": cal.delay(base_end, end) if p < 1 else 0,

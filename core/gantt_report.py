@@ -1,6 +1,6 @@
 """Gantt en PDF (A4 horizontal, membrete LANDCROS) para la vista pública: el
 mismo Gantt de la pantalla (por camión o por actividad, con o sin el plan
-original, con el Ready to Work de cada camión), con la fecha-hora del último
+original, con el Ready to Work de cada camión y la bandera Engine Service), con la fecha-hora del último
 registro de avance de cada Gantt."""
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from datetime import date, timedelta
 import pandas as pd
 
 from core import config
-from core.executive_report import (BAR_BASE, BLACK, GREY, LINE, MARGIN, ORANGE, RTW_RGB, STATUS_RGB, WHITE, _fd,
+from core.executive_report import (BAR_BASE, BLACK, GREY, LINE, MARGIN, ENGINE_PAD_DAYS, ENGINE_RGB, ORANGE, RTW_RGB, STATUS_RGB, WHITE, _fd,
                                    _Report, _txt, t)
 from core.project import Project
 
@@ -33,21 +33,22 @@ def _rows(p: Project, trucks: list[str], by_activity: bool) -> list[dict]:
                 name = (act.name or t(f"act_{r.act_key}")) + (" (ext.)" if r.external else "")
                 out.append({"truck": r.truck, "label": name, "start": r.fc_start, "end": r.fc_end,
                             "base_start": r.base_start, "base_end": r.base_end, "status": r.status,
-                            "progress": r.progress, "rtw_start": None, "rtw_end": None})
+                            "progress": r.progress, "rtw_start": None, "rtw_end": None, "engine": False})
             out.append({"truck": tk.truck, "label": t("rtw"), "start": None, "end": None, "base_start": None,
                         "base_end": None, "status": "rtw", "progress": 0.0,
-                        "rtw_start": tk.rtw_start, "rtw_end": tk.rtw_end})
+                        "rtw_start": tk.rtw_start, "rtw_end": tk.rtw_end, "engine": tk.engine_service})
         return out
     base_start = acts.groupby("truck").base_start.agg(lambda s: min((d for d in s if d), default=None))
     return [{"truck": r.truck, "label": r.truck, "start": r.start, "end": r.end, "base_start": base_start.get(r.truck),
              "base_end": r.base_end, "status": r.status, "progress": r.progress,
-             "rtw_start": r.rtw_start, "rtw_end": r.rtw_end}
+             "rtw_start": r.rtw_start, "rtw_end": r.rtw_end, "engine": r.engine_service}
             for r in tr.itertuples()]
 
 
 def _chart(pdf: _Report, p: Project, rows: list[dict], by_activity: bool, show_baseline: bool) -> None:
     cols = ("start", "end", "rtw_end") + (("base_start", "base_end") if show_baseline else ())
-    dates = [r[c] for r in rows for c in cols if r[c]] + [p.today]
+    dates = ([r[c] for r in rows for c in cols if r[c]] + [p.today]
+             + [r["rtw_end"] + timedelta(days=ENGINE_PAD_DAYS) for r in rows if r["engine"] and r["rtw_end"]])
     lo, hi = min(dates) - timedelta(days=2), max(dates) + timedelta(days=3)
     span = max((hi - lo).days, 1)
     truck_w, label_w = (16, 58) if by_activity else (0, 18)
@@ -122,6 +123,8 @@ def _chart(pdf: _Report, p: Project, rows: list[dict], by_activity: bool, show_b
         if r["rtw_start"] and r["rtw_end"]:
             pdf.rtw_bar(xpos(r["rtw_start"]), by, xpos(r["rtw_end"] + timedelta(days=1)) - xpos(r["rtw_start"]), bh,
                         size)
+            if r["engine"]:
+                pdf.engine_flag(xpos(r["rtw_end"] + timedelta(days=1)) + 0.4, y + row_h * 0.1, row_h * 0.8, size)
         y += row_h
     today_line(top, y)
     pdf.set_y(y + 2)
@@ -132,7 +135,8 @@ def _legend_and_stamp(pdf: _Report, p: Project, trucks: list[str], by_activity: 
     y = pdf.get_y()
     pdf.legend(([("Original plan", BAR_BASE)] if show_baseline else [])
                + [(t("st_" + s), STATUS_RGB[s]) for s in (ACTIVITY_LEGEND if by_activity else TRUCK_LEGEND)]
-               + [(t("rtw"), RTW_RGB)])
+               + [(t("rtw"), RTW_RGB)]
+               + ([(t("engine_short"), ENGINE_RGB)] if p.trucks[p.trucks.truck.isin(trucks)].engine_service.any() else []))
 
     ts = p.last_progress(trucks)
     tz = p.settings.get("timezone", "UTC")
@@ -163,6 +167,7 @@ def build_gantt_pdf(p: Project, by_activity: bool = False, show_baseline: bool =
                                           "HCMZ tracking app. Grey bar = original plan - coloured bar = forecast "
                                           "(colour = status, label = progress) - light green = Ready to Work (RTW): "
                                           f"right after each truck's last activity, {config.RTW_DAYS} working days "
-                                          "(Mon-Fri); a weekend finish extends it to Tuesday."),
+                                          "(Mon-Fri); a weekend finish extends it to Tuesday. Red flag = engine replacement "
+                                          "required (Engine Service)."),
                    new_x="LMARGIN", new_y="NEXT")
     return bytes(pdf.output())

@@ -131,3 +131,10 @@ STATUS_COLORS = {
 # (ver core/project.py). Verde más claro que "completed" para distinguirlos.
 RTW_DAYS = 2
 RTW_COLOR = "#66BB6A"
+
+# ─── Aviso de reemplazo de motor (Engine Service) ────────────────────────
+# Camiones que, después de Ready to Work, requieren reemplazo de motor. Se
+# muestran con una bandera roja al final de su barra RTW (solo visual: no
+# cambia fechas, avance ni estado).
+ENGINE_SERVICE_TRUCKS: tuple[str, ...] = ("RD225", "RD226")
+ENGINE_FLAG_COLOR = "#C62828"

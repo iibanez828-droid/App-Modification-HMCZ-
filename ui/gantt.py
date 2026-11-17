@@ -1,7 +1,8 @@
 """Gantt interactivo (Plotly): plan original (barra gris delgada) y pronóstico
 (barra de color según el estado), con la línea de hoy. Dos vistas: por
 actividad de cada camión y por camión (ventana completa). Cada camión cierra
-con Ready to Work (RTW, barra verde). La flota original y las máquinas en
+con Ready to Work (RTW, barra verde); los que requieren reemplazo de motor
+llevan una bandera roja (Engine Service) al final de su RTW. La flota original y las máquinas en
 operación (camiones agregados en la app) van en Gantt separados."""
 
 from __future__ import annotations
@@ -39,7 +40,7 @@ def gantt_panels(p: Project, t: T, trucks: list[str], mode: str, show_baseline: 
                         config={"displaylogo": False, "modeBarButtonsToRemove": ["select2d", "lasso2d"]})
         if stamp:
             _progress_stamp(p, t, selected)
-    st.caption(t("gantt_help", days=config.RTW_DAYS))
+    st.caption(t("gantt_help", days=config.RTW_DAYS) + " · 🚩 " + t("engine_flag"))
 
 
 def _progress_stamp(p: Project, t: T, trucks: list[str]) -> None:
@@ -68,6 +69,31 @@ def _rtw_trace(t: T, tr: pd.DataFrame, labels: list[str], show_baseline: bool) -
         hovertemplate=("<b>%{y}</b><br>" + t("rtw") + ": %{customdata[0]} → %{customdata[1]}<br>"
                        + t("rtw_note", days=config.RTW_DAYS) + "<extra></extra>"),
     )
+
+
+def _engine_flag_traces(t: T, tr: pd.DataFrame, labels: list[str]) -> list[go.Scatter]:
+    """Bandera roja "Engine Service" justo después del RTW de los camiones que requieren reemplazo de motor.
+    Un punto invisible unos días más allá deja espacio para el texto en la escala automática."""
+    df = tr.assign(row=labels)
+    df = df[df.engine_service & df.rtw_end.notna()]
+    if df.empty:
+        return []
+    x = pd.to_datetime(df.rtw_end) + timedelta(days=1)
+    return [
+        go.Scatter(
+            y=df.row, x=x, mode="markers+text", name=t("engine_flag"),
+            marker=dict(symbol="triangle-right", size=15, color=config.ENGINE_FLAG_COLOR,
+                        line=dict(color="#1A1A1A", width=0.5)),
+            text=[t("engine_short")] * len(df), textposition="middle right",
+            textfont=dict(color=config.ENGINE_FLAG_COLOR, size=11, family="Barlow, sans-serif"),
+            cliponaxis=False,
+            customdata=[[fmt_date(r.rtw_end)] for r in df.itertuples()],
+            hovertemplate=("<b>%{y}</b><br>🚩 " + t("engine_flag") + "<br>" + t("rtw") + " → %{customdata[0]}"
+                           "<extra></extra>"),
+        ),
+        go.Scatter(y=df.row, x=x + timedelta(days=12), mode="markers", marker=dict(opacity=0),
+                   showlegend=False, hoverinfo="skip"),
+    ]
 
 
 def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True) -> go.Figure:
@@ -115,6 +141,7 @@ def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True
     rtw = _rtw_trace(t, tr, rtw_rows, show_baseline)
     if rtw is not None:
         fig.add_trace(rtw)
+    fig.add_traces(_engine_flag_traces(t, tr, rtw_rows))
 
     # Separadores entre camiones, debajo de cada fila RTW salvo la última. El eje
     # cuenta las filas desde abajo (categoryarray invertido en _finish).
@@ -167,6 +194,7 @@ def truck_gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool 
     rtw = _rtw_trace(t, tr, rows, show_baseline)  # en la misma fila del camión, después de su pronóstico
     if rtw is not None:
         fig.add_trace(rtw)
+    fig.add_traces(_engine_flag_traces(t, tr, rows))
     _finish(fig, p, t, rows, row_height=40)
     return fig
 

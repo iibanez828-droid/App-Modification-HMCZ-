@@ -30,6 +30,8 @@ def _rgb(hex_color: str) -> tuple[int, int, int]:
 STATUS_RGB = {k: _rgb(v) for k, v in config.STATUS_COLORS.items()}
 STATUS_RGB["not_started"] = STATUS_RGB["upcoming"]
 RTW_RGB = _rgb(config.RTW_COLOR)
+ENGINE_RGB = _rgb(config.ENGINE_FLAG_COLOR)
+ENGINE_PAD_DAYS = 12  # días extra a la derecha de la escala para el texto de la bandera
 
 PAGE_W, MARGIN = 210, 12
 CONTENT_W = PAGE_W - 2 * MARGIN
@@ -161,6 +163,19 @@ class _Report(FPDF):
             self.set_text_color(*BLACK)
             self.cell(w, h, "RTW", align="C")
 
+    def engine_flag(self, x: float, y: float, h: float, size: float = 6) -> None:
+        """Bandera roja de reemplazo de motor (Engine Service) en x, en una fila de alto h que empieza en y."""
+        self.set_draw_color(*BLACK)
+        self.set_line_width(0.3)
+        self.line(x, y, x, y + h)
+        self.set_fill_color(*ENGINE_RGB)
+        self.polygon([(x, y), (x + h * 0.9, y + h * 0.3), (x, y + h * 0.6)], style="F")
+        self.set_line_width(0.2)
+        self.set_xy(x + h * 0.9 + 0.5, y)
+        self.set_font("Helvetica", "B", size)
+        self.set_text_color(*ENGINE_RGB)
+        self.cell(self.get_string_width("Engine Service") + 1, h * 0.6, "Engine Service")
+
     def legend(self, items: list[tuple[str, tuple]]) -> None:
         """Leyenda del Gantt en una línea, en la posición actual: muestras de color y la línea de hoy.
         Cada elemento ocupa el ancho de su texto, para que quepa también en la hoja vertical."""
@@ -259,7 +274,8 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
     acts = p.activities[p.activities.truck.isin(trucks)]
     base_start = acts.groupby("truck").base_start.agg(lambda s: min((d for d in s if d), default=None))
     dates = ([d for col in ("start", "end", "base_end", "rtw_end") for d in tr[col] if d]
-             + [d for d in base_start if d] + [p.today])
+             + [d for d in base_start if d] + [p.today]
+             + [r.rtw_end + timedelta(days=ENGINE_PAD_DAYS) for r in tr.itertuples() if r.engine_service and r.rtw_end])
     lo, hi = min(dates) - timedelta(days=2), max(dates) + timedelta(days=3)
     span = max((hi - lo).days, 1)
     label_w, row_h = 16, 6.2
@@ -300,6 +316,8 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
                 pdf.cell(bw, 3.2, f"{r.progress * 100:.0f}%", align="C")
         if r.rtw_start and r.rtw_end:
             pdf.rtw_bar(xpos(r.rtw_start), y + 2.4, xpos(r.rtw_end + timedelta(days=1)) - xpos(r.rtw_start), 3.2)
+            if r.engine_service:
+                pdf.engine_flag(xpos(r.rtw_end + timedelta(days=1)) + 0.4, y + 1.6, 4.2, 5.5)
     xt = xpos(p.today)
     pdf.set_draw_color(*ORANGE)
     pdf.set_line_width(0.5)
@@ -311,7 +329,8 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
     pdf.set_xy(MARGIN, y)
     pdf.legend([("Original plan", BAR_BASE)]
                + [(t("st_" + s), STATUS_RGB[s]) for s in ("completed", "in_progress", "overdue", "upcoming", "future")]
-               + [(t("rtw"), RTW_RGB)])
+               + [(t("rtw"), RTW_RGB)]
+               + ([(t("engine_short"), ENGINE_RGB)] if tr.engine_service.any() else []))
     pdf.set_y(y + 7)
 
 

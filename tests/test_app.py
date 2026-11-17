@@ -209,6 +209,34 @@ def test_gantt_figures_close_each_truck_with_rtw(tmp_path):
     assert list(next(tr for tr in fig.data if tr.name == "Ready to Work (RTW)").y) == ["RD220", "RD224"]
 
 
+def test_engine_service_flag_after_rtw(tmp_path):
+    from datetime import date, timedelta
+    import pandas as pd
+    from core import config
+    from core.events import initialize
+    from core.gantt_report import build_gantt_pdf
+    from core.i18n import translator
+    from core.project import build_project
+    from storage.local_store import LocalStore
+    from ui.gantt import gantt_figure, truck_gantt_figure
+
+    s = LocalStore(tmp_path / "d")
+    initialize(s, "x")
+    p, t = build_project(s.snapshot(), today=date(2026, 10, 25)), translator("en")
+    tr = p.trucks.set_index("truck")
+    assert sorted(tr.index[tr.engine_service]) == ["RD225", "RD226"]
+    # Por camión: bandera solo en RD225 y RD226, el día siguiente al fin de su RTW
+    fig = truck_gantt_figure(p, t, ["RD224", "RD225", "RD226"])
+    flag = next(x for x in fig.data if x.name == t("engine_flag"))
+    assert list(flag.y) == ["RD225", "RD226"] and flag.marker.color == config.ENGINE_FLAG_COLOR
+    assert [pd.Timestamp(d).date() for d in flag.x] == [tr.loc[k, "rtw_end"] + timedelta(days=1) for k in ("RD225", "RD226")]
+    # Por actividad: en la fila RTW del camión; sin camiones marcados no hay bandera
+    fig = gantt_figure(p, t, ["RD225"])
+    assert list(next(x for x in fig.data if x.name == t("engine_flag")).y) == ["RD225 · Ready to Work (RTW)"]
+    assert not any(x.name == t("engine_flag") for x in gantt_figure(p, t, ["RD220"]).data)
+    assert build_gantt_pdf(p).startswith(b"%PDF") and build_gantt_pdf(p, by_activity=True).startswith(b"%PDF")
+
+
 def test_admin_truck_gantt_and_no_user_management(at):
     _setup_admin(at)
     assert at.session_state["g_mode"] == "truck"

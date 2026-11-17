@@ -224,6 +224,8 @@ TEXTS: dict[str, tuple[str, str]] = {
     "rtw": ("Ready to Work (RTW)", "稼働準備（RTW）"),
     "rtw_note": ("Right after the last activity · {days} working days (Mon–Fri)",
                  "最終作業の直後から {days} 稼働日（月〜金）"),
+    "engine_flag": ("Engine replacement required (Engine Service)", "エンジン交換が必要（エンジンサービス）"),
+    "engine_short": ("Engine Service", "エンジンサービス"),
     "last_progress": ("Last progress update: {ts}", "最終進捗更新：{ts}"),
     "download_gantt_pdf": ("Print Gantt (PDF)", "ガントを印刷（PDF）"),
     "download_gantt_help": ("A4 landscape PDF of the Gantt shown on screen (same view and original plan option). "
