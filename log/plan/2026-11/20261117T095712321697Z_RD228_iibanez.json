@@ -1,0 +1,12 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-17T09:57:12.321697+00:00",
+ "user": "iibanez",
+ "truck": "RD228",
+ "changes": [],
+ "reason": "Update",
+ "weekend": {
+  "sat": true,
+  "sun": true
+ }
+}
