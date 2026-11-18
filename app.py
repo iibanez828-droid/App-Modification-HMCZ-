@@ -19,7 +19,7 @@ from storage import StorageError, local_dir, make_store
 from ui import admin, supervisor
 from ui.common import Ctx, note, password_form, show_flash
 from ui.gantt import gantt_panels
-from ui.theme import footer, header, inject_css, sidebar_logo
+from ui.theme import dev_credit, footer, header, inject_css, sidebar_logo
 
 st.set_page_config(page_title=config.PROJECT_NAME, page_icon=str(config.LOGO_PATH), layout="wide",
                    initial_sidebar_state="expanded")
@@ -58,7 +58,7 @@ try:
     with st.spinner(t("loading")):
         snapshot, project = load_state(store, store.version, int(time.time() // 30))
 except StorageError as exc:
-    header(config.PROJECT_NAME, config.FLEET)
+    header(config.PROJECT_NAME, config.FLEET, t("dev_credit"))
     st.error(f"{t('load_failed')} {exc}", icon=":material/cloud_off:")
     if st.button(t("retry"), icon=":material/refresh:"):
         load_state.clear()
@@ -102,10 +102,11 @@ def login_form() -> None:
 
 def public_page() -> None:
     """View: cualquiera con el link ve los Gantt (solo lectura); el inicio de sesión va a la derecha."""
-    header(config.PROJECT_NAME, f"{config.FLEET} · {t('public_subtitle')}")
+    header(config.PROJECT_NAME, f"{config.FLEET} · {t('public_subtitle')}", t("dev_credit"))
     view_col, login_col = st.columns([3.3, 1], gap="large")
     with login_col:
         login_form()
+        dev_credit(t("dev_credit"), light=True)  # en la vista pública no hay menú lateral
     with view_col:
         if project is None:
             note(t("not_initialized"))
@@ -170,11 +171,12 @@ with st.sidebar:
     st.caption(f"{t('data_source')}: {store.label}")
     if project is not None:
         st.caption(f"{t('today')}: {project.today:%d-%b-%Y} ({project.settings.get('timezone')})")
+    dev_credit(t("dev_credit"))  # siempre visible al final del menú
 
 # ─── Contenido ────────────────────────────────────────────────────────────
 show_flash()
 subtitle = t("subtitle_admin") if view == "admin" else t("subtitle_supervisor")
-header(config.PROJECT_NAME, f"{config.FLEET} · {subtitle}")
+header(config.PROJECT_NAME, f"{config.FLEET} · {subtitle}", t("dev_credit"))
 if project is None:
     if user.is_admin or user.is_master:
         note(t("init_help"))

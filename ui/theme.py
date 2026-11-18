@@ -48,6 +48,11 @@ header[data-testid="stHeader"],[data-testid="stToolbar"]{background:transparent!
 [data-testid="stSidebar"] hr{border-top:1px solid #333;}
 .sidebar-logo{display:flex;justify-content:center;padding:14px 10px 12px;border-bottom:1px solid #333;margin-bottom:12px;}
 .sidebar-logo img{max-width:150px;}
+.dev-credit{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:10px;border-top:1px solid #333;
+  font-size:.78rem;line-height:1.25;color:#BBBBBB;}
+.dev-credit svg{flex:0 0 auto;width:30px;height:15px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.25);}
+.dev-credit.light{color:#666;border-top-color:#DDD;}
+.dev-credit.light svg{box-shadow:0 0 0 1px rgba(0,0,0,.15);}
 .side-user{font-family:'Barlow Condensed',sans-serif;font-size:1.15rem;font-weight:700;color:#fff;}
 .side-role{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
   background:#FF6B00;color:#fff!important;padding:1px 8px;border-radius:2px;margin-top:2px;}
@@ -63,6 +68,10 @@ header[data-testid="stHeader"],[data-testid="stToolbar"]{background:transparent!
 .lc-header-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.8rem;letter-spacing:.04em;color:#fff;line-height:1.1;}
 .lc-header-subtitle{font-weight:300;font-size:.82rem;color:#AAAAAA;margin-top:3px;letter-spacing:.07em;text-transform:uppercase;}
 .lc-header img{height:62px;}
+.lc-header-right{display:flex;align-items:center;gap:18px;}
+.lc-header-credit{display:flex;align-items:center;gap:8px;max-width:230px;font-size:.78rem;line-height:1.25;color:#BBBBBB;text-align:left;}
+.lc-header-credit svg{flex:0 0 auto;width:32px;height:16px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.25);}
+@media (max-width:700px){.lc-header-credit{display:none;}}
 
 /* Tarjetas KPI */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px;}
@@ -120,12 +129,33 @@ def sidebar_logo() -> None:
     st.markdown(f'<div class="sidebar-logo">{html}</div>', unsafe_allow_html=True)
 
 
-def header(title: str, subtitle: str) -> None:
+# Bandera de Canadá (proporción 2:1, misma geometría que la bandera oficial), en línea para
+# que se vea igual en cualquier equipo; el emoji 🇨🇦 en Windows aparece como "CA".
+CANADA_FLAG_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9600 4800" role="img" aria-label="Canada">'
+    '<path fill="#D52B1E" d="M0 0h2400l99 99h4602l99-99h2400v4800h-2400l-99-99h-4602l-99 99H0z"/>'
+    '<path fill="#FFF" d="M2400 0h4800v4800h-4800zm2490 4430-45-863a95 95 0 0 1 111-98l859 151-116-320a65 65 0 0 1 '
+    '20-73l941-762-212-99a65 65 0 0 1-34-79l186-572-542 115a65 65 0 0 1-73-38l-105-247-423 454a65 65 0 0 1-111-57l'
+    '204-1052-327 189a65 65 0 0 1-91-27l-332-652-332 652a65 65 0 0 1-91 27l-327-189 204 1052a65 65 0 0 1-111 57l'
+    '-423-454-105 247a65 65 0 0 1-73 38l-542-115 186 572a65 65 0 0 1-34 79l-212 99 941 762a65 65 0 0 1 20 73l-116 '
+    '320 859-151a95 95 0 0 1 111 98l-45 863z"/></svg>'
+)
+
+
+def dev_credit(text: str, light: bool = False) -> None:
+    """Crédito del equipo que desarrolló la app, con la bandera de Canadá."""
+    st.markdown(f'<div class="dev-credit{" light" if light else ""}">{CANADA_FLAG_SVG}<span>{text}</span></div>',
+                unsafe_allow_html=True)
+
+
+def header(title: str, subtitle: str, credit: str = "") -> None:
+    """Banda negra superior; `credit` va con la bandera de Canadá junto a la imagen del camión."""
     b64 = image_b64(config.TRUCK_IMAGE_PATH)
     img = f'<img src="data:image/webp;base64,{b64}" alt="EH4000AC-3"/>' if b64 else ""
+    cred = f'<div class="lc-header-credit">{CANADA_FLAG_SVG}<span>{credit}</span></div>' if credit else ""
     st.markdown(
         f'<div class="lc-header"><div><div class="lc-header-title">{title}</div>'
-        f'<div class="lc-header-subtitle">{subtitle}</div></div>{img}</div>',
+        f'<div class="lc-header-subtitle">{subtitle}</div></div><div class="lc-header-right">{cred}{img}</div></div>',
         unsafe_allow_html=True,
     )
 

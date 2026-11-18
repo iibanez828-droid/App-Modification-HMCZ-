@@ -37,6 +37,8 @@ TEXTS: dict[str, tuple[str, str]] = {
     "subtitle_supervisor": ("Field progress", "現場進捗入力"),
 
     # ── Inicio de sesión y contraseña ──
+    "dev_credit": ("App developed by HTM Product Support team Canada",
+                   "HTM プロダクトサポートチーム（カナダ）が開発したアプリ"),
     "login": ("Sign in", "ログイン"),
     "logout": ("Sign out", "ログアウト"),
     "public_subtitle": ("View · project status (read only)", "閲覧 · プロジェクト状況（閲覧のみ）"),
