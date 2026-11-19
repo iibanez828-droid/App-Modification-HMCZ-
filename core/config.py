@@ -148,3 +148,18 @@ OPERATION_PERIODS: dict[str, tuple[tuple[str, str], ...]] = {
     "RD228": (("2026-11-16", "2026-11-27"),),  # en operación desde el 16-nov; vuelve el 28-nov
 }
 OPERATION_COLOR = "#7E57C2"
+
+# ─── Crédito del equipo de desarrollo ────────────────────────────────────
+# Se muestra en la app (encabezado y menú) y en todos los reportes PDF.
+DEV_CREDIT = "App developed by HTM Product Support team Canada"
+# Bandera de Canadá (proporción 2:1, misma geometría que la bandera oficial), en línea para
+# que se vea igual en cualquier equipo; el emoji 🇨🇦 en Windows aparece como "CA".
+CANADA_FLAG_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9600 4800" role="img" aria-label="Canada">'
+    '<path fill="#D52B1E" d="M0 0h2400l99 99h4602l99-99h2400v4800h-2400l-99-99h-4602l-99 99H0z"/>'
+    '<path fill="#FFF" d="M2400 0h4800v4800h-4800zm2490 4430-45-863a95 95 0 0 1 111-98l859 151-116-320a65 65 0 0 1 '
+    '20-73l941-762-212-99a65 65 0 0 1-34-79l186-572-542 115a65 65 0 0 1-73-38l-105-247-423 454a65 65 0 0 1-111-57l'
+    '204-1052-327 189a65 65 0 0 1-91-27l-332-652-332 652a65 65 0 0 1-91 27l-327-189 204 1052a65 65 0 0 1-111 57l'
+    '-423-454-105 247a65 65 0 0 1-73 38l-542-115 186 572a65 65 0 0 1-34 79l-212 99 941 762a65 65 0 0 1 20 73l-116 '
+    '320 859-151a95 95 0 0 1 111 98l-45 863z"/></svg>'
+)

@@ -4,6 +4,7 @@ la flota. No incluye el detalle de cada actividad por camión."""
 
 from __future__ import annotations
 
+import io
 from datetime import date, timedelta
 
 from fpdf import FPDF
@@ -76,6 +77,13 @@ class _Report(FPDF):
         self.set_text_color(170, 170, 170)
         self.cell(self.w - 80 - MARGIN, 5, _txt(f"{config.PROJECT_NAME.upper()} - {config.FLEET} FLEET - "
                                                  f"{_fd(self.today).upper()}"), align="R")
+        # Crédito del equipo de desarrollo con la bandera de Canadá, alineado a la derecha
+        self.set_font("Helvetica", "", 7)
+        text = _txt(config.DEV_CREDIT)
+        x_text = self.w - MARGIN - self.c_margin - self.get_string_width(text)  # mismo borde que la línea de arriba
+        self.image(io.BytesIO(config.CANADA_FLAG_SVG.encode()), x=x_text - 7, y=19.6, w=6, h=3)
+        self.set_xy(80, 19)
+        self.cell(self.w - 80 - MARGIN, 4.2, text, align="R")
         self.set_y(36)
 
     def footer(self) -> None:
