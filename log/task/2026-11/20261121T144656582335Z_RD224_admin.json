@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-21T14:46:56.582335+00:00",
+ "user": "admin",
+ "truck": "RD224",
+ "act": "trailing_lower",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 6.0,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-11-21",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
