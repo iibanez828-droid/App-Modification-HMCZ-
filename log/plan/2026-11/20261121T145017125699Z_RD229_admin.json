@@ -1,0 +1,24 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-21T14:50:17.125699+00:00",
+ "user": "admin",
+ "truck": "RD229",
+ "changes": [
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-11-21",
+   "fc_end": "2026-11-21",
+   "base_start": "2026-11-21",
+   "base_end": "2026-11-21"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-11-21",
+   "fc_end": "2026-11-21",
+   "base_start": "2026-11-21",
+   "base_end": "2026-11-21"
+  }
+ ],
+ "reason": "Updated",
+ "v": 2
+}
