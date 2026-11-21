@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-21T14:46:37.442949+00:00",
+ "user": "admin",
+ "truck": "RD229",
+ "act": "trunnion_mod",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 48.0,
+   "supervisor": "Administrator user",
+   "technicians": "",
+   "date": "2026-11-20",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
