@@ -1,0 +1,33 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-23T06:51:10.120937+00:00",
+ "user": "admin",
+ "truck": "RD226",
+ "changes": [
+  {
+   "act": "trailing_lower",
+   "base_start": "2026-11-17",
+   "base_end": "2026-11-17"
+  },
+  {
+   "act": "trunnion_cap",
+   "base_end": "2026-11-25"
+  },
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-11-30",
+   "fc_end": "2026-12-01",
+   "base_start": "2026-11-30",
+   "base_end": "2026-12-01"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-12-01",
+   "fc_end": "2026-12-01",
+   "base_start": "2026-12-01",
+   "base_end": "2026-12-01"
+  }
+ ],
+ "reason": "change",
+ "v": 2
+}
