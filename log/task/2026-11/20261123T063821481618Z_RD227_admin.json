@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-23T06:38:21.481618+00:00",
+ "user": "admin",
+ "truck": "RD227",
+ "act": "trunnion_cap",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 6.5,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-11-19",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
