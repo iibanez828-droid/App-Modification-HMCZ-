@@ -1,0 +1,20 @@
+{
+ "kind": "plan",
+ "ts": "2026-11-23T06:41:16.912738+00:00",
+ "user": "admin",
+ "truck": "RD227",
+ "changes": [
+  {
+   "act": "trunnion_mod",
+   "fc_start": "2026-11-25",
+   "fc_end": "2026-11-26"
+  },
+  {
+   "act": "trailing_assy",
+   "fc_start": "2026-11-27",
+   "fc_end": "2026-11-27"
+  }
+ ],
+ "reason": "change plan",
+ "v": 2
+}
