@@ -1,0 +1,20 @@
+{
+ "kind": "task",
+ "ts": "2026-11-23T06:46:36.991229+00:00",
+ "user": "admin",
+ "truck": "RD226",
+ "act": "lhs_seat",
+ "updates": [
+  {
+   "task_id": "_ACTIVITY_",
+   "progress": 100,
+   "actual_mh": 0.0,
+   "supervisor": "Ivan Ibanez",
+   "technicians": "",
+   "date": "2026-11-23",
+   "remarks": "",
+   "status": "done"
+  }
+ ],
+ "comment": ""
+}
