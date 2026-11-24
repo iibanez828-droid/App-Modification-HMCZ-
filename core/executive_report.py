@@ -333,15 +333,11 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
         pdf.set_font("Helvetica", "B", 7.5)
         pdf.set_text_color(*BLACK)
         pdf.cell(label_w, row_h, r.truck)
-        bs = base_start.get(r.truck)
-        if bs and r.base_end:
-            pdf.set_fill_color(*BAR_BASE)
-            pdf.rect(xpos(bs), y + 0.6, xpos(r.base_end + timedelta(days=1)) - xpos(bs), 1.4, "F")
         if r.start and r.end:
-            pdf.forecast_bar(xpos, r.start, r.end, r.operation, y + 2.4, 3.2, STATUS_RGB.get(r.status, GREY),
+            pdf.forecast_bar(xpos, r.start, r.end, r.operation, y + 1.5, 3.6, STATUS_RGB.get(r.status, GREY),
                              f"{r.progress * 100:.0f}%", 6, 9)
         if r.rtw_start and r.rtw_end:
-            pdf.rtw_bar(xpos(r.rtw_start), y + 2.4, xpos(r.rtw_end + timedelta(days=1)) - xpos(r.rtw_start), 3.2)
+            pdf.rtw_bar(xpos(r.rtw_start), y + 1.5, xpos(r.rtw_end + timedelta(days=1)) - xpos(r.rtw_start), 3.6)
             if r.engine_service:
                 pdf.engine_flag(xpos(r.rtw_end + timedelta(days=1)) + 0.4, y + 1.6, 4.2, 5.5)
     xt = xpos(p.today)
@@ -353,8 +349,7 @@ def _timeline(pdf: _Report, p: Project, trucks: list[str]) -> None:
     pdf.set_line_width(0.2)
     y = top + row_h * len(tr) + 2
     pdf.set_xy(MARGIN, y)
-    lines = pdf.legend([("Original plan", BAR_BASE)]
-               + [(t("st_" + s), STATUS_RGB[s]) for s in ("completed", "in_progress", "overdue", "upcoming", "future")]
+    lines = pdf.legend([(t("st_" + s), STATUS_RGB[s]) for s in ("completed", "in_progress", "overdue", "upcoming", "future")]
                + [(t("rtw"), RTW_RGB)]
                + ([(t("op_period"), OP_RGB)] if tr.operation.map(bool).any() else [])
                + ([(t("engine_short"), ENGINE_RGB)] if tr.engine_service.any() else []))
@@ -467,10 +462,10 @@ def build_executive_pdf(p: Project) -> bytes:
     # La flota original y las máquinas en operación (agregadas en la app) van en cronogramas separados
     fleet, operating = p.group_trucks("fleet"), p.group_trucks("operating")
     if fleet:
-        pdf.section("Gantt truck modification (original plan vs. forecast)", need=6.2 * len(fleet) + 25)
+        pdf.section("Gantt truck modification", need=6.2 * len(fleet) + 25)
         _timeline(pdf, p, fleet)
     if operating:
-        pdf.section("Gantt operating machine (original plan vs. forecast)", need=6.2 * len(operating) + 25)
+        pdf.section("Gantt operating machine", need=6.2 * len(operating) + 25)
         _timeline(pdf, p, operating)
 
     pdf.section("Activity summary - all trucks", need=7 * len(_plan_activities(p)) + 20)

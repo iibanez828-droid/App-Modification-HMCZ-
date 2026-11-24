@@ -131,7 +131,7 @@ def _engine_flag_traces(t: T, tr: pd.DataFrame, labels: list[str]) -> list[go.Sc
     ]
 
 
-def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True) -> go.Figure:
+def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = False) -> go.Figure:
     acts = p.activities[p.activities.truck.isin(trucks)].sort_values(["truck", "order"]).copy()
     acts["row"] = [f"{r.truck} · {act_name(t, r.act_key)}" for r in acts.itertuples()]
     tr = p.trucks[p.trucks.truck.isin(trucks)].sort_values("truck")
@@ -199,7 +199,7 @@ def gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True
     return fig
 
 
-def truck_gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = True) -> go.Figure:
+def truck_gantt_figure(p: Project, t: T, trucks: list[str], show_baseline: bool = False) -> go.Figure:
     """Una barra por camión: ventana completa del plan original y del pronóstico."""
     acts = p.activities[p.activities.truck.isin(trucks)]
     base_start = acts.groupby("truck").base_start.agg(lambda s: min((d for d in s if d), default=None))

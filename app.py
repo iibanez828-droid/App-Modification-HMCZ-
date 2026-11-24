@@ -115,7 +115,7 @@ def public_page() -> None:
         c1, c2, c3 = st.columns([2, 2, 1.4], vertical_alignment="center")
         mode = c1.segmented_control(t("gantt_mode"), ["truck", "activity"], default="truck", key="pub_mode",
                                     format_func=lambda m: t("gantt_by_" + m), label_visibility="collapsed") or "truck"
-        show_base = c2.checkbox(t("show_baseline"), value=True, key="pub_base")
+        show_base = False  # el plan original ya no se dibuja: las fechas reales mandan sobre el pronóstico
         c3.download_button(t("download_gantt_pdf"), build_gantt_pdf(project, mode == "activity", show_base),
                            file_name=f"HCMZ_Gantt_{project.today:%Y%m%d}.pdf", mime="application/pdf",
                            icon=":material/print:", help=t("download_gantt_help"), on_click="ignore", width="stretch")

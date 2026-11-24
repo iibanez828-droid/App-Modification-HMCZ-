@@ -125,12 +125,14 @@ def test_visibility_and_plan_change(store):
     p = build_project(store.snapshot(), today=TODAY)
     assert p.truck_row("RD231").status == "future"
     assert "RD231" not in p.visible_trucks()
-    write_event(store, "plan", {"truck": "RD224", "reason": "test",
-                                "changes": [{"act": "lhs_seat", "fc_start": "2026-11-16", "fc_end": "2026-11-17"}]}, "admin")
+    # La pestaña Plan guarda la fecha real y el pronóstico la sigue (las fechas reales mandan)
+    write_event(store, "plan", {"truck": "RD224", "reason": "test", "v": 2,
+                                "changes": [{"act": "lhs_seat", "base_start": "2026-11-16", "base_end": "2026-11-17",
+                                             "fc_start": "2026-11-16", "fc_end": "2026-11-17"}]}, "admin")
     p = build_project(store.snapshot(), today=TODAY)
     a = p.activities.set_index(["truck", "act_key"]).loc[("RD224", "lhs_seat")]
-    assert a.fc_end == date(2026, 11, 17) and a.base_end == date(2026, 11, 12)  # el original no cambia
-    assert a.delay_wd == 3
+    assert a.fc_end == a.base_end == date(2026, 11, 17)
+    assert a.delay_wd == 0
     assert len(p.plan_log) == 1
 
 
@@ -282,3 +284,36 @@ def test_actual_dates_can_be_corrected_only_by_new_saves(store):
                 "admin", "RD224")
     from datetime import date
     assert build_project(store.snapshot(), today=TODAY).truck_activities("RD224").iloc[0].base_end == date(2026, 12, 30)
+
+
+def test_every_text_key_used_by_the_app_exists():
+    """Cada t("clave") del código tiene su texto (evita ver el nombre interno en pantalla)."""
+    import pathlib
+    import re
+    from core.i18n import TEXTS
+    used = set()
+    for f in [*pathlib.Path("ui").glob("*.py"), pathlib.Path("app.py"), *pathlib.Path("core").glob("*.py")]:
+        used |= set(re.findall(r'\bt\(\s*"([a-z0-9_]+)"', f.read_text()))
+    assert not sorted(k for k in used if k not in TEXTS and not k.endswith("_"))  # "st_" + estado, etc.
+
+
+def test_actual_dates_overrule_the_forecast(store):
+    from datetime import date
+    from core.events import write_event
+    p = build_project(store.snapshot(), today=TODAY)
+    a = p.activities
+    with_actual = a[a.base_start.notna() & a.base_end.notna()]
+    assert len(with_actual) and (with_actual.fc_start == with_actual.base_start).all()
+    assert (with_actual.fc_end == with_actual.base_end).all()
+    # Un cambio solo del pronóstico no cambia las fechas: mandan las reales
+    act = p.truck_activities("RD224").iloc[0]
+    write_event(store, "plan", {"truck": "RD224", "changes": [{"act": act.act_key, "fc_end": "2026-12-31"}],
+                                "reason": "x"}, "admin", "RD224")
+    row = build_project(store.snapshot(), today=TODAY).truck_activities("RD224").iloc[0]
+    assert row.base_end == act.base_end and row.fc_end == act.base_end
+    # Al corregir la fecha real (como hace la pestaña Plan), el pronóstico la sigue
+    write_event(store, "plan", {"truck": "RD224", "v": 2, "reason": "y",
+                                "changes": [{"act": act.act_key, "base_end": "2026-12-30", "fc_end": "2026-12-30"}]},
+                "admin", "RD224")
+    row = build_project(store.snapshot(), today=TODAY).truck_activities("RD224").iloc[0]
+    assert row.base_end == row.fc_end == date(2026, 12, 30)

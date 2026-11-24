@@ -152,7 +152,7 @@ def _legend_and_stamp(pdf: _Report, p: Project, trucks: list[str], by_activity: 
     pdf.set_y(y + 6.5 + 4.5 * lines)
 
 
-def build_gantt_pdf(p: Project, by_activity: bool = False, show_baseline: bool = True) -> bytes:
+def build_gantt_pdf(p: Project, by_activity: bool = False, show_baseline: bool = False) -> bytes:
     pdf = _Report(p.today, "GANTT REPORT", orientation="L")
     pdf.alias_nb_pages()
     pdf.add_page()
@@ -168,7 +168,7 @@ def build_gantt_pdf(p: Project, by_activity: bool = False, show_baseline: bool =
     pdf.set_font("Helvetica", "I", 7)
     pdf.set_text_color(*GREY)
     pdf.multi_cell(pdf.content_w, 4, _txt(f"Generated {_fd(p.today)} ({p.settings.get('timezone', 'UTC')}) from the "
-                                          "HCMZ tracking app. Grey bar = original plan - coloured bar = forecast "
+                                          "HCMZ tracking app. Coloured bar = actual dates "
                                           "(colour = status, label = progress) - light green = Ready to Work (RTW): "
                                           f"right after each truck's last activity, {config.RTW_DAYS} working days "
                                           "(Mon-Fri); a weekend finish extends it to Tuesday. Purple = truck temporarily returned "

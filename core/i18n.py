@@ -218,10 +218,10 @@ TEXTS: dict[str, tuple[str, str]] = {
     "no_operating_trucks": ("No operating machines yet. Trucks added by the administrator appear here.",
                             "稼働機械はまだありません。管理者が追加した車両がここに表示されます。"),
     "select_trucks": ("Select at least one truck.", "車両を1台以上選択してください。"),
-    "gantt_help": ("Grey bar = original plan · coloured bar = forecast (colour = status, label = progress) · "
+    "gantt_help": ("Coloured bar = actual dates (colour = status, label = progress) · "
                    "light green = Ready to Work (RTW): right after each truck's last activity, {days} working days "
                    "(Mon–Fri); a weekend finish extends it to Tuesday. Zoom by dragging; double-click to reset.",
-                   "灰色＝当初計画 · 色付き＝予測（色＝状態、数値＝進捗） · 薄い緑＝稼働準備（RTW）：各車両の最終作業の直後から "
+                   "色付き＝実績日（色＝状態、数値＝進捗） · 薄い緑＝稼働準備（RTW）：各車両の最終作業の直後から "
                    "{days} 稼働日（月〜金）、週末に終了した場合は火曜日まで。ドラッグで拡大、ダブルクリックで元に戻ります。"),
     "rtw": ("Ready to Work (RTW)", "稼働準備（RTW）"),
     "rtw_note": ("Right after the last activity · {days} working days (Mon–Fri)",
@@ -240,9 +240,9 @@ TEXTS: dict[str, tuple[str, str]] = {
 
     # ── Plan ──
     "plan_help": ("The list shows the trucks starting within {days} days; turn on «Show all trucks» to edit any other "
-                  "truck. You can change the actual and the forecast dates. Every change is recorded with its reason.",
+                  "truck. You change the actual dates; the forecast follows them. Every change is recorded with its reason.",
                   "一覧には {days} 日以内に開始する車両が表示されます。他の車両を編集するには「全車両を表示」をオンにしてください。"
-                  "実績日と予測日を変更できます。すべての変更は理由とともに記録されます。"),
+                  "実績日を変更すると、予測も同じ日付になります。すべての変更は理由とともに記録されます。"),
     "plan_show_all": ("Show all trucks (including future and completed)", "全車両を表示（将来・完了を含む）"),
     "work_saturday": ("Work on Saturday", "土曜日稼働"),
     "work_sunday": ("Work on Sunday", "日曜日稼働"),
@@ -254,15 +254,13 @@ TEXTS: dict[str, tuple[str, str]] = {
     "err_end_before_start": ("{act}: the end date is before the start date.", "{act}：終了日が開始日より前です。"),
     "plan_changes": ("{n} activity(ies) changed.", "{n} 件の作業項目が変更されています。"),
     "save_plan": ("Save plan", "計画を保存"),
-    "plan_form_help": ("Edit the dates and the weekend days, write the reason and press «Save plan». Nothing is sent "
-                       "while you edit, so you can change several cells calmly. «Check changes» updates the "
-                       "preview without saving.",
-                       "日付と週末稼働を編集し、理由を入力して「計画を保存」を押してください。編集中は何も送信されないため、"
-                       "複数のセルを落ち着いて変更できます。「変更を確認」は保存せずにプレビューを更新します。"),
+    "plan_form_help": ("Edit the actual start and end dates and the weekend days, write the reason and press «Save "
+                       "plan». The forecast takes the same dates automatically (the Gantt shows them). Nothing is "
+                       "sent while you edit; «Check changes» updates the preview without saving.",
+                       "実績の開始日・終了日と週末稼働を編集し、理由を入力して「計画を保存」を押してください。予測は自動的に"
+                       "同じ日付になります（ガントに表示されます）。編集中は何も送信されません。「変更を確認」は保存せずに"
+                       "プレビューを更新します。"),
     "plan_summary_title": ("Changes to be saved:", "保存される変更："),
-    "plan_cleared_warning": ("Some «Assigned to» names will be cleared (⚠). If that was not intended, undo it in the "
-                             "table before saving.",
-                             "一部の「担当」が空欄になります（⚠）。意図しない場合は、保存する前に表で元に戻してください。"),
     "plan_check": ("Check changes", "変更を確認"),
     "plan_no_changes": ("No changes to save: edit a date or a weekend day first.",
                         "保存する変更はありません。先に日付または週末稼働を変更してください。"),
@@ -271,8 +269,9 @@ TEXTS: dict[str, tuple[str, str]] = {
     "plan_saved_n": ("Plan saved: {n} activity(ies) updated.", "計画を保存しました：{n} 件の作業項目を更新。"),
     "plan_saved": ("Plan updated.", "計画を更新しました。"),
     "shift_title": ("Shift all pending activities", "未完了の作業をまとめて移動"),
-    "shift_help": ("Moves the forecast of every activity that is not complete by N working days, using this truck's calendar.",
-                   "未完了のすべての作業の予測を、この車両の稼働カレンダーで N 稼働日移動します。"),
+    "shift_help": ("Moves the actual dates (and the forecast with them) of every activity that is not complete by N "
+                   "working days, using this truck's calendar.",
+                   "未完了のすべての作業の実績日（と予測）を、この車両の稼働カレンダーで N 稼働日移動します。"),
     "shift_days": ("Working days (+ later / − earlier)", "稼働日（＋後ろ倒し／−前倒し）"),
     "shift_apply": ("Shift and save", "移動して保存"),
 

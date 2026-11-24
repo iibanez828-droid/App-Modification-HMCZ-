@@ -191,7 +191,7 @@ def _gantt(ctx: Ctx) -> None:
     c1, c2 = st.columns([2, 3], vertical_alignment="center")
     mode = c1.segmented_control(t("gantt_mode"), ["truck", "activity"], default="truck", key="g_mode",
                                 format_func=lambda m: t("gantt_by_" + m), label_visibility="collapsed") or "truck"
-    show_base = c2.checkbox(t("show_baseline"), value=True, key="g_base")
+    show_base = False  # el plan original ya no se dibuja: las fechas reales mandan sobre el pronóstico
     gantt_panels(p, t, trucks, mode, show_base, "g_admin")
 
 
@@ -239,7 +239,6 @@ def _plan(ctx: Ctx) -> None:
         "progress": acts.progress * 100,
         "base_start": acts.base_start, "base_end": acts.base_end,
         "fc_start": acts.fc_start, "fc_end": acts.fc_end,
-        "assigned_to": acts.assigned_to,
     })
     key = f"plan_ed_{truck}_{nonce}"
 
@@ -248,8 +247,11 @@ def _plan(ctx: Ctx) -> None:
         c1, c2, _ = st.columns([1, 1, 3])
         sat = c1.checkbox(t("work_saturday"), value=cal0.saturday, key=f"sat_{truck}_{nonce}")
         sun = c2.checkbox(t("work_sunday"), value=cal0.sunday, key=f"sun_{truck}_{nonce}")
+        # Solo se ven las fechas reales (Actual). Las del pronóstico siguen en los datos, ocultas,
+        # y toman las mismas fechas que se escriban en Actual (el Gantt las sigue mostrando).
         st.data_editor(
             base, key=key, hide_index=True, width="stretch", num_rows="fixed",
+            column_order=["act", "ext", "progress", "base_start", "base_end"],
             disabled=["act", "ext", "progress"],
             column_config={
                 "act": st.column_config.TextColumn(t("activity"), width=200),
@@ -260,7 +262,6 @@ def _plan(ctx: Ctx) -> None:
                 "base_end": st.column_config.DateColumn(t("base_end"), format="DD-MMM-YYYY", help=t("baseline_help")),
                 "fc_start": st.column_config.DateColumn(t("fc_start"), format="DD-MMM-YYYY"),
                 "fc_end": st.column_config.DateColumn(t("fc_end"), format="DD-MMM-YYYY"),
-                "assigned_to": st.column_config.TextColumn(t("assigned_to")),
             },
         )
         preview = st.container()  # se completa abajo, con las fechas editadas
@@ -281,9 +282,11 @@ def _plan(ctx: Ctx) -> None:
                     errors.append(t("err_invalid_date", act=base.at[int(idx), "act"], value=changes[col]))
                     continue
             edited.at[int(idx), col] = val
+            if col in ("base_start", "base_end") and val:  # el pronóstico (oculto) copia la fecha real
+                edited.at[int(idx), col.replace("base_", "fc_")] = val
 
     # Vista previa con las fechas editadas
-    changes, summary = [], []  # summary: (advertencia, texto) por cada celda que cambia
+    changes, summary = [], []  # summary: una línea por cada fecha real que cambia
     work_days: set = set()
     for i, r in edited.iterrows():
         a = acts.loc[i]
@@ -302,16 +305,10 @@ def _plan(ctx: Ctx) -> None:
         for col in ("base_start", "base_end"):  # fechas reales: se pueden corregir, no borrar
             if r[col] and r[col] != base.at[i, col]:
                 ch[col] = r[col].isoformat()
-        if (r.assigned_to or "").strip() != (base.at[i, "assigned_to"] or "").strip():
-            ch["assigned_to"] = (r.assigned_to or "").strip()
         if len(ch) > 1:
             changes.append(ch)
-            for col in ("base_start", "base_end", "fc_start", "fc_end", "assigned_to"):
-                if col in ch:
-                    old, new = base.at[i, col], r[col]
-                    fmt = (lambda v: v or "—") if col == "assigned_to" else fmt_date
-                    summary.append((col == "assigned_to" and not new,
-                                    f"**{r.act}** · {t(col)}: {fmt(old)} → {fmt(new)}"))
+            summary += [f"**{r.act}** · {t(col)}: {fmt_date(base.at[i, col])} → {fmt_date(r[col])}"
+                        for col in ("base_start", "base_end") if col in ch]
     starts = [d for d in edited.fc_start if d]
     ends = [d for d in edited.fc_end if d]
     limit = int(p.settings.get("max_working_days", 5))
@@ -328,9 +325,7 @@ def _plan(ctx: Ctx) -> None:
             st.error(e, icon=":material/block:")
         if summary:
             st.markdown(f"**{t('plan_summary_title')}**")
-            st.markdown("\n".join(f"- {':orange[⚠] ' if warn else ''}{txt}" for warn, txt in summary))
-            if any(warn for warn, _ in summary):
-                st.warning(t("plan_cleared_warning"), icon=":material/warning:")
+            st.markdown("\n".join(f"- {txt}" for txt in summary))
     status.caption(t("plan_changes", n=len(changes)))
 
     if save:
@@ -362,9 +357,12 @@ def _plan(ctx: Ctx) -> None:
                 for a in acts.itertuples():
                     if a.progress >= 1 or not a.fc_start or not a.fc_end:
                         continue
-                    shift_changes.append({"act": a.act_key, "fc_start": cal0.shift(a.fc_start, int(n)).isoformat(),
-                                          "fc_end": cal0.shift(a.fc_end, int(n)).isoformat()})
-                payload = {"truck": truck, "changes": shift_changes, "reason": f"{reason2.strip()} ({int(n):+d} wd)"}
+                    # Las fechas reales mandan: se mueven junto con el pronóstico
+                    s0, e0 = cal0.shift(a.fc_start, int(n)).isoformat(), cal0.shift(a.fc_end, int(n)).isoformat()
+                    shift_changes.append({"act": a.act_key, "fc_start": s0, "fc_end": e0,
+                                          "base_start": s0, "base_end": e0})
+                payload = {"truck": truck, "changes": shift_changes, "reason": f"{reason2.strip()} ({int(n):+d} wd)",
+                           "v": 2}
                 if safe_write(ctx, lambda: write_event(ctx.store, "plan", payload, ctx.user.username, truck), t("plan_saved")):
                     st.session_state[f"plan_nonce_{truck}"] = nonce + 1
                     st.rerun()

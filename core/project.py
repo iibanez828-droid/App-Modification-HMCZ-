@@ -21,6 +21,9 @@ Reglas de negocio (todas en este archivo):
   camión): si termina un viernes, sábado o domingo, RTW se extiende hasta el
   martes siguiente. Solo se muestra en el Gantt: no cambia las fechas, el
   avance, el estado ni los atrasos del camión.
+- Fechas reales (Actual): mandan sobre el pronóstico. Donde una actividad tiene
+  fecha real, el pronóstico toma esa misma fecha (Gantt, fechas del camión,
+  reportes). En la pestaña Plan solo se editan las fechas reales.
 - Returned to operation: `config.OPERATION_PERIODS` marca los tramos en que
   un camión vuelve temporalmente a operación. El Gantt pinta ese tramo de la
   barra de otro color (`split_periods`). Solo visual.
@@ -254,6 +257,12 @@ def build_project(snapshot: Mapping[str, bytes], today: date | None = None) -> P
                               "fc_start": ch.get("fc_start", ""), "fc_end": ch.get("fc_end", ""),
                               "reason": ev.get("reason", "")})
     config.set_custom_activities(custom)
+    # Las fechas reales (Actual) mandan: donde una actividad tiene fecha real, el pronóstico toma
+    # esa misma fecha (Gantt, fechas del camión, reportes). Las fechas reales no se modifican.
+    for row in rows.values():
+        for fld in ("start", "end"):
+            if row.get(f"base_{fld}"):
+                row[f"fc_{fld}"] = row[f"base_{fld}"]
     acts = pd.DataFrame(list(rows.values()), columns=cols).fillna("")
     idx = {(r.truck, r.act_key): i for i, r in acts.iterrows()}
 
